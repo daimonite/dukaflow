@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { formatTsh, formatQty } from '../utils/translations';
 import { fileToDownscaledDataUrl } from '../utils/image';
+import { BrandLogo } from './BrandLogo';
 import { defaultReorderLevel } from '../utils/productDefaults';
 import { Product, BaseUnit } from '../types';
 import { Modal } from './Modal';
@@ -392,15 +393,11 @@ export const StockScreen: React.FC = () => {
         </div>
       )}
 
-      {/* Sub-Header Bar (DukaSmart Identity) */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-emerald-100/80 sticky top-[108px] z-20 shadow-xs">
+      {/* Sub-Header Bar (DukaSmart Identity) — sticks directly below the app header */}
+      <div className="bg-white/90 backdrop-blur-md border-b border-emerald-100/80 sticky top-[var(--header-height)] z-20 shadow-xs">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <img
-              src="https://lh3.googleusercontent.com/aida/AEtjO1WqfVNZWOzPRUIq-IOOGmS4dWIh3bgUArKpuvKcxbiupsXxZq7kl2bcdiTcGM59kBT14Wj0UYum6q4zSjWOAUbLQVifeeSGnMAZEK87ipqiT4nbsMKk9NcfRKUXF696hmS0X_-PjrDE_INa3qnPjC6477PIIH--Ggp2gXo-MlTm9q5CNkAItcbV7BZ9Uzx6PGnAD7tX04njAd_PVzKMD7HobdIJYg03Mf3CGhEkmvt9EQJ2ipUSyICEAHA"
-              alt="DukaSmart Logo"
-              className="h-8 w-auto object-contain flex-shrink-0"
-            />
+            <BrandLogo className="h-8 w-8 flex-shrink-0" />
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
@@ -415,12 +412,18 @@ export const StockScreen: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-9 h-9 rounded-full ring-2 ring-emerald-500/30 overflow-hidden flex-shrink-0">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzjIFLNSs87xWPqBHiCkT3dJ5IeOFANjwuGprLYvD3mwjMdAX1JQPMZqflwdlWyxEtf54xjHkCWAbT4SM_tgHWrLKIgUyMGLs3IMZ3vRraJTexcrgQCCjkuWKoc7BQ65gnqrxQmTGjk2ueTU4DzwBCkaOzX3ZUQziemxxCRyTTUlgqBFD2v7lRBO1fKry4BbY7mpBAAR83yxVBtgiDPqH2jm5l4LeQ8A9bIiIJbdGX5KU6_LCXTVeD"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+            {/* Owner initials, drawn locally: no remote image to expire. */}
+            <div
+              title={settings.adminName || 'Owner'}
+              className="w-9 h-9 rounded-full ring-2 ring-emerald-500/30 bg-emerald-700 text-white flex items-center justify-center text-xs font-bold flex-shrink-0"
+            >
+              {(settings.adminName || 'Owner')
+                .trim()
+                .split(/\s+/)
+                .map(word => word[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
             </div>
           </div>
         </div>

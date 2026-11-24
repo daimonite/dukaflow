@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ShopProvider } from './context/ShopContext';
 import { SyncProvider } from './context/SyncContext';
 import { ToastProvider } from './context/ToastContext';
@@ -32,6 +32,12 @@ function AppContent() {
   const [slideDir, setSlideDir] = useState<'left' | 'right' | 'none'>('none');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // The window scrolls the page, and remounting a screen no longer resets that
+  // offset, so start each screen at the top instead of mid-page.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const switchTab = useCallback((id: string) => {
     if (id === activeTab) {
       setSidebarOpen(false);
@@ -61,7 +67,10 @@ function AppContent() {
       />
 
       {/* ── Main Content Router ── */}
-      <main className="flex-1 overflow-x-hidden">
+      {/* overflow-x-clip, not overflow-x-hidden: `hidden` turns this into a
+          scroll container, which would become the sticky reference for the
+          screens' sub-headers and push them down over their own content. */}
+      <main className="flex-1 overflow-x-clip">
         <div
           key={activeTab}
           onAnimationEnd={() => setSlideDir('none')}
