@@ -54,7 +54,8 @@ export const StockScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [filterLowStockOnly, setFilterLowStockOnly] = useState(false);
   const [isStocktakeMode, setIsStocktakeMode] = useState(false);
-  const [showStocktakeBanner, setShowStocktakeBanner] = useState(false);
+  // Products already counted in the running audit, cleared whenever the mode is toggled.
+  const [countedProductIds, setCountedProductIds] = useState<string[]>([]);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'warn' } | null>(null);
@@ -127,6 +128,11 @@ export const StockScreen: React.FC = () => {
     return products.filter(p => p.stock_qty <= p.reorder_level);
   }, [products]);
 
+  const countedProducts = useMemo(
+    () => products.filter(p => countedProductIds.includes(p.id)).length,
+    [products, countedProductIds]
+  );
+
   // Categories list with counts
   const categoriesWithCounts = useMemo(() => {
     const counts: { [cat: string]: number } = {};
@@ -191,8 +197,19 @@ export const StockScreen: React.FC = () => {
       : `Hesabu ya stoo: ${shrinkageReason}${stocktakeNote ? ` (${stocktakeNote})` : ''}`;
 
     adjustStock(activeStocktakeProduct.id, counted, reasonText);
+    setCountedProductIds(ids =>
+      ids.includes(activeStocktakeProduct.id) ? ids : [...ids, activeStocktakeProduct.id]
+    );
     showToast(`Hesabu ya ${activeStocktakeProduct.name} imehifadhiwa kikamilifu!`, 'success');
     handleCloseStocktake();
+  };
+
+  // Toggling starts a fresh audit, so the tally never carries over from last time.
+  const toggleStocktakeMode = () => {
+    const next = !isStocktakeMode;
+    setIsStocktakeMode(next);
+    setCountedProductIds([]);
+    if (next) showToast('Modi ya Hesabu ya Stoo imewashwa', 'info');
   };
 
   // Submit price update
@@ -522,16 +539,9 @@ export const StockScreen: React.FC = () => {
 
             {/* Stocktake Toggle */}
             <button
-              onClick={() => {
-                const nextState = !showStocktakeBanner;
-                setShowStocktakeBanner(nextState);
-                setIsStocktakeMode(nextState);
-                if (nextState) {
-                  showToast('Modi ya Hesabu ya Stoo imewashwa', 'info');
-                }
-              }}
+              onClick={toggleStocktakeMode}
               className={`flex flex-col items-center justify-center p-3 rounded-2xl border active:scale-98 transition-all text-center min-h-[64px] ${
-                showStocktakeBanner
+                isStocktakeMode
                   ? 'bg-amber-100 border-amber-300 text-amber-900 font-bold'
                   : 'bg-white border-emerald-100 hover:bg-emerald-50/50 text-gray-800'
               }`}
@@ -541,7 +551,9 @@ export const StockScreen: React.FC = () => {
                 <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               </div>
               <span className="text-xs font-bold leading-tight">Hesabu Stoo</span>
-              <span className="text-[10px] text-gray-500 leading-tight">Linganisha na mizani</span>
+              <span className="text-[10px] text-gray-500 leading-tight">
+                {isStocktakeMode ? `${countedProducts}/${products.length} imehesabiwa` : 'Linganisha na mizani'}
+              </span>
             </button>
 
             {/* Personal Use / Drawings */}
@@ -582,23 +594,32 @@ export const StockScreen: React.FC = () => {
         </section>
 
         {/* Live Stocktake Mode Active Banner */}
-        {showStocktakeBanner && (
+        {isStocktakeMode && (
           <section className="animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="bg-amber-500 text-white p-3.5 rounded-2xl flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 animate-spin">
+            <div className="bg-amber-500 text-white p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
                   <RotateCcw className="w-4 h-4 text-white" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold">Modi ya Hesabu Imewashwa (Audit Mode Active)</p>
-                  <p className="text-[11px] text-amber-100">
-                    Bofya kitufe cha <b>&quot;Pima&quot;</b> au <b>&quot;Hesabu&quot;</b> kwenye bidhaa yoyote kurekodi hesabu halisi na pungufu.
+                <div className="min-w-0">
+                  <p className="text-xs font-bold">
+                    Hesabu ya Stoo Inaendelea — {countedProducts} kati ya {products.length}
                   </p>
+                  <p className="text-[11px] text-amber-100">
+                    Bofya <b>&quot;Hesabu / Pima&quot;</b> kwenye bidhaa kurekodi kiasi halisi; zilizohesabiwa zina alama ya kijani.
+                  </p>
+                  <div className="mt-1.5 h-1 rounded-full bg-white/25 overflow-hidden">
+                    <div
+                      className="h-full bg-white transition-all duration-300"
+                      style={{ width: `${products.length ? (countedProducts / products.length) * 100 : 0}%` }}
+                    />
+                  </div>
                 </div>
               </div>
               <button
-                onClick={() => setShowStocktakeBanner(false)}
-                className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors"
+                onClick={toggleStocktakeMode}
+                title="Maliza hesabu"
+                className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors flex-shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -674,6 +695,7 @@ export const StockScreen: React.FC = () => {
             filteredProducts.map(prod => {
               const isLowStock = prod.stock_qty <= prod.reorder_level;
               const isOutOfStock = prod.stock_qty <= 0;
+              const isCounted = countedProductIds.includes(prod.id);
               const stockValue = Math.max(0, prod.stock_qty) * prod.avg_cost;
               const profitMargin = prod.sell_price - prod.avg_cost;
               const profitPct = prod.sell_price > 0 ? (profitMargin / prod.sell_price) * 100 : 0;
@@ -681,7 +703,11 @@ export const StockScreen: React.FC = () => {
               return (
                 <div
                   key={prod.id}
-                  className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-2xs hover:shadow-xs transition-shadow"
+                  className={`bg-white rounded-2xl p-4 sm:p-5 border shadow-2xs hover:shadow-xs transition-shadow ${
+                    isStocktakeMode && !isCounted
+                      ? 'border-amber-300 ring-1 ring-amber-200'
+                      : 'border-emerald-100/90'
+                  }`}
                 >
                   {/* Card Header: Thumbnail, Name, Badges, Edit Price */}
                   <div className="flex items-start justify-between gap-3">
@@ -719,6 +745,17 @@ export const StockScreen: React.FC = () => {
                           ) : (
                             <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800">
                               Stoo ya Kutosha
+                            </span>
+                          )}
+                          {isStocktakeMode && (
+                            <span
+                              className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                                isCounted
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {isCounted ? 'Imehesabiwa' : 'Haijahesabiwa'}
                             </span>
                           )}
                         </div>
