@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useShop } from '../context/ShopContext';
 import {
   Package,
@@ -34,6 +34,25 @@ import { Product, BaseUnit } from '../types';
 import { Modal } from './Modal';
 import { CatalogPickerModal } from './CatalogPickerModal';
 
+// A running stocktake belongs to this phone: it is physical work done against the shelves
+// at one moment, so a half-finished audit is kept locally instead of synced to other devices.
+const STOCKTAKE_KEY = 'dukeflow_stocktake_v1';
+
+type StocktakeSession = {
+  startedAt: number;
+  countedIds: string[];
+};
+
+function loadStocktakeSession(): StocktakeSession | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STOCKTAKE_KEY) || 'null') as StocktakeSession | null;
+    if (!saved || typeof saved.startedAt !== 'number' || !Array.isArray(saved.countedIds)) return null;
+    return saved;
+  } catch {
+    return null;
+  }
+}
+
 export const StockScreen: React.FC = () => {
   const {
     t,
@@ -53,9 +72,16 @@ export const StockScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [filterLowStockOnly, setFilterLowStockOnly] = useState(false);
-  const [isStocktakeMode, setIsStocktakeMode] = useState(false);
-  // Ids counted in the running audit; a Set keeps the per-card lookup O(1).
-  const [countedIds, setCountedIds] = useState<Set<string>>(() => new Set());
+  // One session object, so the mode and its tally can never disagree; survives tab changes and reloads.
+  const [stocktake, setStocktake] = useState<StocktakeSession | null>(loadStocktakeSession);
+  const isStocktakeMode = stocktake !== null;
+  // A Set keeps the per-card lookup O(1) as the audit grows.
+  const countedIds = useMemo(() => new Set(stocktake?.countedIds ?? []), [stocktake]);
+
+  useEffect(() => {
+    if (stocktake) localStorage.setItem(STOCKTAKE_KEY, JSON.stringify(stocktake));
+    else localStorage.removeItem(STOCKTAKE_KEY);
+  }, [stocktake]);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'warn' } | null>(null);
@@ -199,22 +225,22 @@ export const StockScreen: React.FC = () => {
       : `Hesabu ya stoo: ${shrinkageReason}${stocktakeNote ? ` (${stocktakeNote})` : ''}`;
 
     adjustStock(activeStocktakeProduct.id, counted, reasonText);
-    setCountedIds(ids => new Set(ids).add(activeStocktakeProduct.id));
+    setStocktake(session =>
+      session && !session.countedIds.includes(activeStocktakeProduct.id)
+        ? { ...session, countedIds: [...session.countedIds, activeStocktakeProduct.id] }
+        : session
+    );
     showToast(`Hesabu ya ${activeStocktakeProduct.name} imehifadhiwa kikamilifu!`, 'success');
     handleCloseStocktake();
   };
 
   // Starting and ending are separate actions, so the tally only ever belongs to one session.
   const startStocktake = () => {
-    setCountedIds(new Set());
-    setIsStocktakeMode(true);
+    setStocktake({ startedAt: Date.now(), countedIds: [] });
     showToast('Modi ya Hesabu ya Stoo imewashwa', 'info');
   };
 
-  const endStocktake = () => {
-    setIsStocktakeMode(false);
-    setCountedIds(new Set());
-  };
+  const endStocktake = () => setStocktake(null);
 
   // Submit price update
   const handleConfirmPriceUpdate = () => {
@@ -600,7 +626,7 @@ export const StockScreen: React.FC = () => {
         </section>
 
         {/* Live Stocktake Mode Active Banner */}
-        {isStocktakeMode && (
+        {stocktake && (
           <section className="animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="bg-amber-500 text-white p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-sm">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -613,6 +639,8 @@ export const StockScreen: React.FC = () => {
                   </p>
                   <p className="text-[11px] text-amber-100">
                     Bofya <b>&quot;Hesabu / Pima&quot;</b> kwenye bidhaa kurekodi kiasi halisi; zilizohesabiwa zina alama ya kijani.
+                    {' · '}imeanza{' '}
+                    {new Date(stocktake.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                   <div className="mt-1.5 h-1 rounded-full bg-white/25 overflow-hidden">
                     <div
