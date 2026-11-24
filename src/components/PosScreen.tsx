@@ -275,14 +275,14 @@ export const PosScreen: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* LEFT COLUMN: Catalog & Products (7-8 cols on large screens) */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-4">
           
           {/* Search bar & Category filters */}
-          <div className="bg-white p-3.5 rounded-3xl border border-orange-100 shadow-xs space-y-3">
+          <div className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-xs space-y-3">
             <div className="relative">
               <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -290,7 +290,7 @@ export const PosScreen: React.FC = () => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder={t.searchProduct}
-                className="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-orange-50/50 border border-orange-100/80 focus:bg-white focus:border-orange-500 focus:outline-hidden text-sm font-medium transition-all"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-emerald-500 focus:outline-hidden text-sm font-medium transition-all"
               />
               {searchQuery && (
                 <button
@@ -310,8 +310,8 @@ export const PosScreen: React.FC = () => {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
                     selectedCategory === cat
-                      ? 'bg-orange-500 text-white shadow-xs shadow-orange-500/30'
-                      : 'bg-gray-100/80 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+                      ? 'bg-emerald-700 text-white shadow-xs shadow-emerald-700/20'
+                      : 'bg-gray-100/80 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
                   }`}
                 >
                   {cat === 'all' ? t.allCategories : cat}
@@ -327,7 +327,7 @@ export const PosScreen: React.FC = () => {
               return (
                 <div
                   key={prod.id}
-                  className="bg-white rounded-3xl p-3.5 border border-orange-100/70 hover:border-orange-300 transition-all shadow-xs hover:shadow-md flex flex-col justify-between group"
+                  className="bg-white rounded-2xl p-3.5 border border-gray-100 hover:border-emerald-200 transition-all shadow-xs hover:shadow-md flex flex-col justify-between group"
                 >
                   <div>
                     {/* Top row: Category tag & Stock count */}
@@ -347,12 +347,12 @@ export const PosScreen: React.FC = () => {
                     </div>
 
                     {/* Product Name */}
-                    <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 mb-1 group-hover:text-orange-600 transition-colors">
+                    <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 mb-1 group-hover:text-emerald-700 transition-colors">
                       {prod.name}
                     </h3>
 
                     {/* Selling price per base unit */}
-                    <div className="text-orange-600 font-extrabold text-base mb-3">
+                    <div className="text-emerald-700 font-extrabold text-base mb-3">
                       {formatTsh(prod.sell_price)}{' '}
                       <span className="text-xs font-normal text-gray-400">/{prod.base_unit}</span>
                     </div>
@@ -365,7 +365,7 @@ export const PosScreen: React.FC = () => {
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => addToCart(prod, 1)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-xs shadow-orange-500/20"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-xs shadow-emerald-700/20"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>1 {prod.base_unit} ({formatTsh(prod.sell_price)})</span>
@@ -398,7 +398,7 @@ export const PosScreen: React.FC = () => {
                               <button
                                 key={unit.label}
                                 onClick={() => addToCart(prod, unit.factor, unit.label, unit.price_override)}
-                                className="text-[11px] font-semibold bg-gray-50 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200 text-gray-700 px-2 py-1 rounded-lg border border-gray-200 transition-colors"
+                                className="text-[11px] font-semibold bg-gray-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-gray-700 px-2 py-1 rounded-lg border border-gray-200 transition-colors"
                               >
                                 {unit.label}: {formatTsh(unitPrice)}
                               </button>
@@ -415,12 +415,12 @@ export const PosScreen: React.FC = () => {
 
         {/* RIGHT COLUMN: POS Cart & Checkout (4-5 cols on large screens) */}
         <div className="lg:col-span-5 xl:col-span-4">
-          <div className="bg-white rounded-3xl border border-orange-100 shadow-md p-4 sm:p-5 sticky top-20 flex flex-col max-h-[calc(100vh-100px)]">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 sticky top-20 flex flex-col max-h-[calc(100vh-100px)]">
             
             {/* Cart Header */}
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
                   <ShoppingCart className="w-4 h-4" />
                 </div>
                 <div>
@@ -453,7 +453,7 @@ export const PosScreen: React.FC = () => {
                 cart.map((item, idx) => (
                   <div
                     key={`${item.product.id}-${item.unitLabel}-${idx}`}
-                    className="p-2.5 bg-orange-50/40 rounded-2xl border border-orange-100 flex items-center justify-between gap-2"
+                    className="p-2.5 bg-emerald-50/40 rounded-2xl border border-emerald-100 flex items-center justify-between gap-2"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-xs text-gray-900 truncate">
@@ -462,7 +462,7 @@ export const PosScreen: React.FC = () => {
                       <div className="text-[11px] text-gray-500">
                         {formatQty(item.quantity, item.unitLabel)} @ {formatTsh(item.unitPrice)}
                       </div>
-                      <div className="font-extrabold text-orange-600 text-xs mt-0.5">
+                      <div className="font-extrabold text-emerald-600 text-xs mt-0.5">
                         {formatTsh(item.lineTotal)}
                       </div>
                     </div>
@@ -471,7 +471,7 @@ export const PosScreen: React.FC = () => {
                     <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200">
                       <button
                         onClick={() => updateCartItemQty(idx, -1)}
-                        className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-orange-100 text-gray-700 hover:text-orange-700 flex items-center justify-center transition-colors"
+                        className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-700 flex items-center justify-center transition-colors"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
@@ -480,7 +480,7 @@ export const PosScreen: React.FC = () => {
                       </span>
                       <button
                         onClick={() => updateCartItemQty(idx, 1)}
-                        className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-orange-100 text-gray-700 hover:text-orange-700 flex items-center justify-center transition-colors"
+                        className="w-6 h-6 rounded-lg bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-700 flex items-center justify-center transition-colors"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -504,7 +504,7 @@ export const PosScreen: React.FC = () => {
                 {selectedCustomer && (
                   <button
                     onClick={() => setSelectedCustomer(null)}
-                    className="text-[10px] text-orange-600 font-semibold hover:underline"
+                    className="text-[10px] text-emerald-600 font-semibold hover:underline"
                   >
                     Ghairi ({selectedCustomer.name})
                   </button>
@@ -526,7 +526,7 @@ export const PosScreen: React.FC = () => {
                     }}
                     className={`text-xs px-2.5 py-1 rounded-xl border transition-all ${
                       selectedCustomer?.id === cust.id
-                        ? 'bg-orange-600 text-white border-orange-600 font-bold shadow-xs'
+                        ? 'bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs'
                         : cust.current_balance > 0
                         ? 'bg-amber-50 text-amber-900 border-amber-200 hover:border-amber-300'
                         : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
@@ -551,7 +551,7 @@ export const PosScreen: React.FC = () => {
                     value={customCustomerName}
                     onChange={e => setCustomCustomerName(e.target.value)}
                     placeholder={t.customerName}
-                    className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:border-orange-500 focus:outline-hidden"
+                    className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:border-emerald-500 focus:outline-hidden"
                   />
                 </div>
               )}
@@ -582,10 +582,10 @@ export const PosScreen: React.FC = () => {
                             : pm === 'mpesa'
                             ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                             : pm === 'tigopesa'
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                             : pm === 'airtel'
                             ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                            : 'bg-orange-600 text-white border-orange-600 shadow-xs'
+                            : 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                           : 'bg-gray-50/80 text-gray-700 border-gray-200/80 hover:bg-gray-100 hover:border-gray-300'
                       }`}
                     >
@@ -602,7 +602,7 @@ export const PosScreen: React.FC = () => {
 
               {/* Cash tender & change calculator with quick chips */}
               {paymentMethod === 'cash' && cart.length > 0 && (
-                <div className="bg-orange-50/50 p-2.5 rounded-2xl border border-orange-100/80 space-y-2 animate-in fade-in duration-150">
+                <div className="bg-emerald-50/50 p-2.5 rounded-2xl border border-emerald-100/80 space-y-2 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between text-[11px] font-bold text-gray-700">
                     <span>Pesa Iliyopokelewa (TSh):</span>
                     {tenderedNum > 0 && (
@@ -622,12 +622,12 @@ export const PosScreen: React.FC = () => {
                       value={cashTendered}
                       onChange={e => setCashTendered(e.target.value)}
                       placeholder={roundedSubtotal ? `${roundedSubtotal}` : '0'}
-                      className="w-full pl-3 pr-20 py-2 bg-white border border-orange-200 rounded-xl text-sm font-mono font-extrabold text-gray-900 focus:border-orange-500 focus:outline-hidden shadow-2xs"
+                      className="w-full pl-3 pr-20 py-2 bg-white border border-emerald-200 rounded-xl text-sm font-mono font-extrabold text-gray-900 focus:border-emerald-500 focus:outline-hidden shadow-2xs"
                     />
                     <button
                       type="button"
                       onClick={() => setCashTendered(roundedSubtotal.toString())}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-extrabold bg-orange-100 hover:bg-orange-200 text-orange-800 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-extrabold bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                       title="Weka pesa kamilifu"
                     >
                       Kamilifu
@@ -644,7 +644,7 @@ export const PosScreen: React.FC = () => {
                           const curr = parseFloat(cashTendered) || 0;
                           setCashTendered((curr + amt).toString());
                         }}
-                        className="px-2 py-0.5 rounded-lg bg-white border border-gray-200 hover:border-orange-300 hover:bg-orange-50 font-mono font-bold text-gray-700 transition-all cursor-pointer shadow-2xs"
+                        className="px-2 py-0.5 rounded-lg bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 font-mono font-bold text-gray-700 transition-all cursor-pointer shadow-2xs"
                       >
                         +{amt.toLocaleString()}
                       </button>
@@ -688,7 +688,7 @@ export const PosScreen: React.FC = () => {
                       value={paymentReference}
                       onChange={e => setPaymentReference(e.target.value)}
                       placeholder="Mf. QK8819 au Jina la Aliyetuma"
-                      className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono font-medium focus:border-orange-500 focus:outline-hidden"
+                      className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-mono font-medium focus:border-emerald-500 focus:outline-hidden"
                     />
                   </div>
                   <p className="text-[10px] text-gray-400">
@@ -720,12 +720,12 @@ export const PosScreen: React.FC = () => {
                     type="checkbox"
                     checked={roundTo50}
                     onChange={e => setRoundTo50(e.target.checked)}
-                    className="accent-orange-500 rounded-sm"
+                    className="accent-emerald-500 rounded-sm"
                   />
                   <span>Rejesha hadi 50 TSh ya karibu:</span>
                 </label>
                 {roundingAdjustment !== 0 && (
-                  <span className="font-mono text-[11px] text-orange-600">
+                  <span className="font-mono text-[11px] text-emerald-600">
                     {roundingAdjustment > 0 ? `+${roundingAdjustment}` : roundingAdjustment} TSh
                   </span>
                 )}
@@ -733,7 +733,7 @@ export const PosScreen: React.FC = () => {
 
               <div className="flex items-center justify-between text-base font-extrabold text-gray-900 pt-1 border-t border-dashed border-gray-200">
                 <span>JUMLA KUU:</span>
-                <span className="text-xl font-extrabold text-orange-600 font-mono">
+                <span className="text-xl font-extrabold text-emerald-600 font-mono">
                   {formatTsh(roundedSubtotal)}
                 </span>
               </div>
@@ -741,7 +741,7 @@ export const PosScreen: React.FC = () => {
               <button
                 disabled={cart.length === 0}
                 onClick={handleCheckout}
-                className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:pointer-events-none text-white font-extrabold text-sm rounded-2xl shadow-md shadow-orange-500/25 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 disabled:opacity-50 disabled:pointer-events-none text-white font-extrabold text-sm rounded-2xl shadow-md shadow-emerald-500/25 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>{paymentMethod === 'credit' ? 'Thibitisha Mauzo ya Mkopo' : t.completeSale}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -783,7 +783,7 @@ export const PosScreen: React.FC = () => {
                   onClick={() => setMoneyAmountInput(amt)}
                   className={`py-1.5 rounded-xl text-xs font-bold border transition-all ${
                     moneyAmountInput === amt
-                      ? 'bg-orange-500 text-white border-orange-500'
+                      ? 'bg-emerald-500 text-white border-emerald-500'
                       : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                   }`}
                 >
@@ -801,10 +801,10 @@ export const PosScreen: React.FC = () => {
                 value={moneyAmountInput}
                 onChange={e => setMoneyAmountInput(e.target.value)}
                 placeholder="2000"
-                className="w-full text-center text-xl font-mono font-bold px-3 py-2 rounded-xl border border-orange-200 bg-orange-50/30 focus:bg-white focus:border-orange-500 focus:outline-hidden"
+                className="w-full text-center text-xl font-mono font-bold px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50/30 focus:bg-white focus:border-emerald-500 focus:outline-hidden"
               />
               {parseFloat(moneyAmountInput) > 0 && (
-                <div className="text-center text-xs text-orange-700 font-semibold mt-1.5">
+                <div className="text-center text-xs text-emerald-700 font-semibold mt-1.5">
                   Italingana na:{' '}
                   <span className="font-bold font-mono">
                     {((parseFloat(moneyAmountInput) || 0) / amountModalProduct.sell_price).toFixed(3)}{' '}
@@ -825,7 +825,7 @@ export const PosScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddByMoneyAmount}
-                className="px-4 py-2 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-xs"
+                className="px-4 py-2 text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-xs"
               >
                 Weka Kikapuni
               </button>
@@ -866,7 +866,7 @@ export const PosScreen: React.FC = () => {
               </div>
               <div className="flex justify-between text-gray-700">
                 <span>Kiasi Unachouza:</span>
-                <span className="font-mono font-bold text-orange-700">
+                <span className="font-mono font-bold text-emerald-700">
                   {lowStockAlert.unitLabel || `${lowStockAlert.factor} ${lowStockAlert.product.base_unit}`}
                 </span>
               </div>
@@ -931,7 +931,7 @@ export const PosScreen: React.FC = () => {
             </div>
 
             {/* Thermal Printable Receipt Card */}
-            <div className="mt-4 p-5 bg-orange-50/30 rounded-2xl border border-orange-100 font-mono text-xs text-gray-800 space-y-3">
+            <div className="mt-4 p-5 bg-emerald-50/30 rounded-2xl border border-emerald-100 font-mono text-xs text-gray-800 space-y-3">
               <div className="text-center space-y-1">
                 <h4 className="font-extrabold text-base tracking-wider text-gray-900">
                   {settings.storeName.toUpperCase()}

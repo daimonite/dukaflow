@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useShop } from '../context/ShopContext';
-import { useSync } from '../context/SyncContext';
 import { useToast } from '../context/ToastContext';
 import {
   Calendar as CalendarIcon,
@@ -22,7 +21,6 @@ import {
   Package,
   CheckCircle2,
   Lock,
-  RefreshCw,
   Sparkles,
   Layers,
   Percent,
@@ -47,7 +45,6 @@ export const CalendarScreen: React.FC = () => {
     closeDayRegister
   } = useShop();
 
-  const { openOutbox, isOnline, pendingCount } = useSync();
   const { showToast } = useToast();
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
@@ -253,7 +250,7 @@ export const CalendarScreen: React.FC = () => {
       
       {/* ── URGENT REORDER BANNER ── */}
       {lowStockProducts.length > 0 && (
-        <div className="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 text-white p-4 rounded-3xl shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse-ring">
+        <div className="bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white p-4 rounded-3xl shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse-ring">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="w-5 h-5 text-white animate-bounce" />
@@ -275,7 +272,7 @@ export const CalendarScreen: React.FC = () => {
           </div>
           <button
             onClick={() => showToast('Nenda sehemu ya Stoo au Ununuzi wa Mzigo kurekodi mzigo mpya', 'info')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white text-red-700 hover:bg-orange-50 font-extrabold text-xs rounded-2xl shadow-sm transition-all btn-press whitespace-nowrap"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white text-red-700 hover:bg-emerald-50 font-extrabold text-xs rounded-2xl shadow-sm transition-all btn-press whitespace-nowrap"
           >
             <Package className="w-4 h-4" />
             <span>Agiza Mzigo Sasa</span>
@@ -284,14 +281,14 @@ export const CalendarScreen: React.FC = () => {
       )}
 
       {/* ── REAL-TIME FINANCIAL SNAPSHOT (TODAY) ── */}
-      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-100">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-100/60 px-2.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100/60 px-2.5 py-0.5 rounded-full">
               Hali ya Fedha ya Leo · Live Snapshot
             </span>
             <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mt-1 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-orange-600" />
+              <DollarSign className="w-5 h-5 text-emerald-600" />
               <span>Mapato, Pesa Mkononi & Faida Halisi ya Leo</span>
             </h2>
           </div>
@@ -302,35 +299,35 @@ export const CalendarScreen: React.FC = () => {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Card 1: Today's Sales Revenue */}
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50/60 border border-orange-200/80 p-3.5 rounded-2xl card-lift">
-            <span className="text-[11px] font-bold text-orange-900 uppercase tracking-wide block">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100/60 border border-gray-200 p-3.5 rounded-2xl card-lift">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide block">
               Mauzo ya Leo (Revenue)
             </span>
-            <div className="text-xl sm:text-2xl font-black text-orange-950 font-mono mt-1">
+            <div className="text-xl sm:text-2xl font-black text-gray-900 font-mono mt-1">
               {formatTsh(todayRevenue)}
             </div>
-            <div className="text-[11px] text-orange-700/80 mt-1 flex items-center gap-1 font-medium">
+            <div className="text-[11px] text-gray-500 mt-1 flex items-center gap-1 font-medium">
               <ShoppingBag className="w-3 h-3" />
               <span>{todaySales.length} Risiti zilizouzwa leo</span>
             </div>
           </div>
 
           {/* Card 2: Actual Cash in Hand */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50/60 border border-blue-200/80 p-3.5 rounded-2xl card-lift">
-            <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wide block">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100/60 border border-gray-200 p-3.5 rounded-2xl card-lift">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide block">
               Pesa Taslimu Drooni (Cash in Hand)
             </span>
-            <div className="text-xl sm:text-2xl font-black text-blue-950 font-mono mt-1">
+            <div className="text-xl sm:text-2xl font-black text-gray-900 font-mono mt-1">
               {formatTsh(actualCashInHand)}
             </div>
-            <div className="text-[11px] text-blue-700/80 mt-1 flex items-center gap-1 font-medium">
+            <div className="text-[11px] text-gray-500 mt-1 flex items-center gap-1 font-medium">
               <Coins className="w-3 h-3" />
               <span>Droo ya fedha iliyo wazi</span>
             </div>
           </div>
 
           {/* Card 3: Gross Profit & Margin */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50/60 border border-emerald-200/80 p-3.5 rounded-2xl card-lift">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-50/60 border border-emerald-200/80 p-3.5 rounded-2xl card-lift">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wide block">
                 Faida ya Mauzo (Gross)
@@ -349,14 +346,14 @@ export const CalendarScreen: React.FC = () => {
           </div>
 
           {/* Card 4: Net Profit after Expenses & Drawings */}
-          <div className="bg-gradient-to-br from-purple-50 to-violet-50/60 border border-purple-200/80 p-3.5 rounded-2xl card-lift">
-            <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wide block">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-50/60 border border-emerald-200/80 p-3.5 rounded-2xl card-lift">
+            <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wide block">
               Faida Halisi (Net Profit)
             </span>
-            <div className={`text-xl sm:text-2xl font-black font-mono mt-1 ${todayNetProfit >= 0 ? 'text-purple-950' : 'text-red-600'}`}>
+            <div className={`text-xl sm:text-2xl font-black font-mono mt-1 ${todayNetProfit >= 0 ? 'text-emerald-950' : 'text-red-600'}`}>
               {formatTsh(todayNetProfit)}
             </div>
-            <div className="text-[10px] text-purple-700/80 mt-1 flex items-center justify-between">
+            <div className="text-[10px] text-emerald-700/80 mt-1 flex items-center justify-between">
               <span>Matumizi: -{formatTsh(todayExpensesTotal)}</span>
               <span>Binafsi: -{formatTsh(todayDrawingsTotal)}</span>
             </div>
@@ -391,7 +388,7 @@ export const CalendarScreen: React.FC = () => {
       </div>
 
       {/* ── QUICK ACTION BAR ── */}
-      <div className="bg-white p-3 sm:p-4 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="bg-white p-3 sm:p-4 rounded-3xl border border-emerald-100 shadow-xs">
         <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2.5">
           Vitendo vya Haraka (Quick Action Bar)
         </div>
@@ -399,9 +396,9 @@ export const CalendarScreen: React.FC = () => {
           {/* Action 1: Add Expense */}
           <button
             onClick={() => setShowExpenseModal(true)}
-            className="flex items-center gap-2 p-2.5 rounded-2xl border border-gray-200 hover:border-orange-400 hover:bg-orange-50/50 transition-all btn-press text-left"
+            className="flex items-center gap-2 p-2.5 rounded-2xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all btn-press text-left"
           >
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
               <ArrowDownRight className="w-4 h-4" />
             </div>
             <div>
@@ -427,9 +424,9 @@ export const CalendarScreen: React.FC = () => {
           {/* Action 3: Reconcile Cash Closing */}
           <button
             onClick={() => setShowReconcileModal(true)}
-            className="flex items-center gap-2 p-2.5 rounded-2xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all btn-press text-left"
+            className="flex items-center gap-2 p-2.5 rounded-2xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all btn-press text-left"
           >
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
               <Lock className="w-4 h-4" />
             </div>
             <div>
@@ -438,36 +435,14 @@ export const CalendarScreen: React.FC = () => {
             </div>
           </button>
 
-          {/* Action 4: Offline Sync Verification */}
-          <button
-            onClick={openOutbox}
-            className="flex items-center gap-2 p-2.5 rounded-2xl border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all btn-press text-left"
-          >
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
-              <RefreshCw className={`w-4 h-4 ${pendingCount > 0 ? 'animate-spin' : ''}`} />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                <span>Hali ya Sync</span>
-                {pendingCount > 0 && (
-                  <span className="bg-orange-500 text-white text-[9px] px-1.5 rounded-full font-mono font-bold">
-                    {pendingCount}
-                  </span>
-                )}
-              </div>
-              <div className="text-[10px] text-gray-400">
-                {isOnline ? 'Online · Tayari kusawazisha' : 'Offline · Dexie hifadhi'}
-              </div>
-            </div>
-          </button>
         </div>
       </div>
 
       {/* ── HEADER AND MONTH NAVIGATION ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div>
           <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-orange-600" />
+            <CalendarIcon className="w-5 h-5 text-emerald-600" />
             <span>{t.salesCalendar}</span>
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -477,7 +452,7 @@ export const CalendarScreen: React.FC = () => {
 
         {/* Month Selector Buttons */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-orange-50 p-1 rounded-2xl border border-orange-100">
+          <div className="flex items-center gap-1 bg-emerald-50 p-1 rounded-2xl border border-emerald-100">
             <button
               onClick={handlePrevMonth}
               className="p-1.5 rounded-xl hover:bg-white text-gray-700 transition-colors btn-press"
@@ -485,7 +460,7 @@ export const CalendarScreen: React.FC = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-extrabold text-sm text-orange-950 px-3 min-w-[140px] text-center">
+            <span className="font-extrabold text-sm text-emerald-950 px-3 min-w-[140px] text-center">
               {monthNames[month]} {year}
             </span>
             <button
@@ -501,29 +476,29 @@ export const CalendarScreen: React.FC = () => {
 
       {/* ── MONTH TOTALS KPI CARDS ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-gradient-to-br from-orange-500 to-amber-500 text-white p-4 rounded-3xl shadow-sm card-lift">
-          <span className="text-xs font-semibold text-orange-100 uppercase tracking-wider block">
+        <div className="bg-gray-900 text-white p-4 rounded-3xl shadow-sm card-lift">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Jumla ya Mauzo ya Mwezi ({monthNames[month]})
           </span>
           <div className="text-2xl font-black mt-1 font-mono">{formatTsh(monthlyTotalRevenue)}</div>
-          <span className="text-[11px] text-orange-100 mt-1 block">
+          <span className="text-[11px] text-gray-400 mt-1 block">
             Kutokana na risiti {monthSales.length} zilizouzwa mwezi huu
           </span>
         </div>
 
         {currentRole === 'admin' && (
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white p-4 rounded-3xl shadow-sm card-lift">
-            <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider block">
+          <div className={`bg-gradient-to-br text-white p-4 rounded-3xl shadow-sm card-lift ${monthlyTotalProfit >= 0 ? 'from-emerald-600 to-emerald-700' : 'from-red-600 to-red-700'}`}>
+            <span className="text-xs font-semibold text-white/75 uppercase tracking-wider block">
               Faida ya Mauzo (Monthly Gross Profit)
             </span>
             <div className="text-2xl font-black mt-1 font-mono">{formatTsh(monthlyTotalProfit)}</div>
-            <span className="text-[11px] text-emerald-100 mt-1 block">
+            <span className="text-[11px] text-white/75 mt-1 block">
               Margin: {monthlyTotalRevenue > 0 ? ((monthlyTotalProfit / monthlyTotalRevenue) * 100).toFixed(1) : 0}% kabla ya kutoa matumizi
             </span>
           </div>
         )}
 
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs card-lift">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs card-lift">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
             Wastani wa Mauzo kwa Siku
           </span>
@@ -540,7 +515,7 @@ export const CalendarScreen: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* Calendar Grid (7 cols) */}
-        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
           
           {/* Legend Strip */}
           <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 text-[10px] text-gray-500">
@@ -593,15 +568,15 @@ export const CalendarScreen: React.FC = () => {
               const isRegularDay = totalAmt >= 100000 && totalAmt < 300000;
               const isLowerDay = totalAmt > 0 && totalAmt < 100000;
 
-              let cellStyle = 'border-gray-100 bg-white hover:bg-orange-50/20';
+              let cellStyle = 'border-gray-100 bg-white hover:bg-emerald-50/20';
               if (isSelected) {
-                cellStyle = 'border-orange-500 bg-orange-50 ring-2 ring-orange-400 shadow-sm';
+                cellStyle = 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400 shadow-sm';
               } else if (isHighPerforming) {
                 cellStyle = 'border-emerald-300 bg-emerald-50/70 hover:border-emerald-500 hover:bg-emerald-100/50';
               } else if (isRegularDay) {
                 cellStyle = 'border-amber-200 bg-amber-50/60 hover:border-amber-400 hover:bg-amber-100/50';
               } else if (isLowerDay) {
-                cellStyle = 'border-blue-100 bg-blue-50/30 hover:border-blue-300';
+                cellStyle = 'border-emerald-100 bg-emerald-50/30 hover:border-emerald-300';
               }
 
               return (
@@ -614,9 +589,9 @@ export const CalendarScreen: React.FC = () => {
                     <span
                       className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${
                         isToday
-                          ? 'bg-orange-600 text-white'
+                          ? 'bg-emerald-600 text-white'
                           : isSelected
-                          ? 'text-orange-900 font-extrabold'
+                          ? 'text-emerald-900 font-extrabold'
                           : 'text-gray-700'
                       }`}
                     >
@@ -656,7 +631,7 @@ export const CalendarScreen: React.FC = () => {
         </div>
 
         {/* Selected Day Breakdown Drawer (5 cols) */}
-        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs flex flex-col">
+        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs flex flex-col">
           <div className="pb-3 border-b border-gray-100 flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
@@ -674,7 +649,7 @@ export const CalendarScreen: React.FC = () => {
             {activeDayData && (
               <div className="text-right">
                 <span className="text-xs text-gray-400 block">Jumla ya Siku:</span>
-                <span className="font-mono font-extrabold text-sm text-orange-600">
+                <span className="font-mono font-extrabold text-sm text-emerald-600">
                   {formatTsh(activeDayData.total)}
                 </span>
               </div>
@@ -698,13 +673,13 @@ export const CalendarScreen: React.FC = () => {
                     className={`p-3.5 rounded-2xl border transition-all ${
                       isVoided
                         ? 'bg-red-50/50 border-red-200 opacity-70'
-                        : 'bg-orange-50/30 border-orange-100 hover:border-orange-300'
+                        : 'bg-emerald-50/30 border-emerald-100 hover:border-emerald-300'
                     }`}
                   >
                     {/* Top line: Receipt no & Time */}
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <div className="flex items-center gap-1.5 font-mono font-bold text-gray-900">
-                        <FileText className="w-3.5 h-3.5 text-orange-600" />
+                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
                         <span>{sale.receipt_no}</span>
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-gray-500">
@@ -746,7 +721,7 @@ export const CalendarScreen: React.FC = () => {
                           {sale.payment_method}
                         </span>
                         {currentRole === 'admin' && !isVoided && (
-                          <span className="text-[10px] text-emerald-700 font-bold">
+                          <span className={`text-[10px] font-bold ${saleProfit >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
                             Faida: {formatTsh(saleProfit)}
                           </span>
                         )}
@@ -837,7 +812,7 @@ export const CalendarScreen: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-gray-100 animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <ArrowDownRight className="w-4 h-4" />
                 </div>
                 <h3 className="font-extrabold text-sm text-gray-900">Rekodi Matumizi ya Duka</h3>
@@ -856,7 +831,7 @@ export const CalendarScreen: React.FC = () => {
                   placeholder="Mfano: LUKU ya dukani, Chakula cha mchana"
                   value={expenseSpentOn}
                   onChange={e => setExpenseSpentOn(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 
@@ -870,7 +845,7 @@ export const CalendarScreen: React.FC = () => {
                     placeholder="Kiasi cha fedha"
                     value={expenseAmount}
                     onChange={e => setExpenseAmount(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-orange-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
                   />
                 </div>
                 <div>
@@ -878,7 +853,7 @@ export const CalendarScreen: React.FC = () => {
                   <select
                     value={expenseCategory}
                     onChange={e => setExpenseCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                   >
                     <option value="electricity_shop">LUKU / Umeme</option>
                     <option value="transport">Usafiri / Boda</option>
@@ -899,7 +874,7 @@ export const CalendarScreen: React.FC = () => {
                   placeholder="Mfano: Risiti namba 0928"
                   value={expenseNote}
                   onChange={e => setExpenseNote(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 
@@ -913,7 +888,7 @@ export const CalendarScreen: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-xs btn-press"
+                  className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs btn-press"
                 >
                   Hifadhi Matumizi
                 </button>
@@ -949,7 +924,7 @@ export const CalendarScreen: React.FC = () => {
                   type="button"
                   onClick={() => setDrawingType('product')}
                   className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                    drawingType === 'product' ? 'bg-white text-orange-600 shadow-xs' : 'text-gray-600'
+                    drawingType === 'product' ? 'bg-white text-emerald-600 shadow-xs' : 'text-gray-600'
                   }`}
                 >
                   Bidhaa ya Duka (Product)
@@ -958,7 +933,7 @@ export const CalendarScreen: React.FC = () => {
                   type="button"
                   onClick={() => setDrawingType('cash')}
                   className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                    drawingType === 'cash' ? 'bg-white text-orange-600 shadow-xs' : 'text-gray-600'
+                    drawingType === 'cash' ? 'bg-white text-emerald-600 shadow-xs' : 'text-gray-600'
                   }`}
                 >
                   Pesa Taslimu (Cash)
@@ -973,7 +948,7 @@ export const CalendarScreen: React.FC = () => {
                       required
                       value={drawingProductId}
                       onChange={e => setDrawingProductId(e.target.value)}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                     >
                       <option value="">-- Chagua bidhaa iliyochukuliwa --</option>
                       {products.map(p => (
@@ -993,7 +968,7 @@ export const CalendarScreen: React.FC = () => {
                       placeholder="Mfano: 1 au 2.5"
                       value={drawingQty}
                       onChange={e => setDrawingQty(e.target.value)}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-orange-500 focus:outline-hidden"
+                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
                     />
                   </div>
                 </>
@@ -1007,7 +982,7 @@ export const CalendarScreen: React.FC = () => {
                     placeholder="Mfano: 20000"
                     value={drawingCashAmount}
                     onChange={e => setDrawingCashAmount(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-orange-500 focus:outline-hidden"
+                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
                   />
                 </div>
               )}
@@ -1019,7 +994,7 @@ export const CalendarScreen: React.FC = () => {
                   placeholder="Mfano: Unga na Mafuta ya kupikia nyumbani"
                   value={drawingNote}
                   onChange={e => setDrawingNote(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1049,7 +1024,7 @@ export const CalendarScreen: React.FC = () => {
           <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-gray-100 animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <Lock className="w-4 h-4" />
                 </div>
                 <h3 className="font-extrabold text-sm text-gray-900">Hesabu & Funga Droo ya Siku</h3>
@@ -1060,12 +1035,12 @@ export const CalendarScreen: React.FC = () => {
             </div>
 
             <form onSubmit={handleConfirmReconcile} className="space-y-3">
-              <div className="bg-blue-50/70 p-3 rounded-2xl border border-blue-100">
-                <div className="text-[11px] text-blue-800 font-semibold">Pesa Zinazotarajiwa Drooni (Expected):</div>
-                <div className="text-xl font-black font-mono text-blue-950 mt-0.5">
+              <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100">
+                <div className="text-[11px] text-emerald-800 font-semibold">Pesa Zinazotarajiwa Drooni (Expected):</div>
+                <div className="text-xl font-black font-mono text-emerald-950 mt-0.5">
                   {formatTsh(cashRegister.expected_closing)}
                 </div>
-                <div className="text-[10px] text-blue-600 mt-1">
+                <div className="text-[10px] text-emerald-600 mt-1">
                   Kuanzia asubuhi ({formatTsh(cashRegister.opening_cash)}) + Mauzo ({formatTsh(cashRegister.cash_sales)}) - Matumizi ({formatTsh(cashRegister.cash_expenses + cashRegister.cash_owner_drawings)})
                 </div>
               </div>
@@ -1080,7 +1055,7 @@ export const CalendarScreen: React.FC = () => {
                   placeholder="Kiasi halisi ulichokihesabu"
                   value={actualCashCounted}
                   onChange={e => setActualCashCounted(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-200 text-sm font-mono font-bold focus:border-blue-500 focus:outline-hidden"
+                  className="w-full p-2.5 rounded-xl border border-gray-200 text-sm font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1090,7 +1065,7 @@ export const CalendarScreen: React.FC = () => {
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                     : parseFloat(actualCashCounted) < cashRegister.expected_closing
                     ? 'bg-red-50 text-red-800 border border-red-200'
-                    : 'bg-blue-50 text-blue-800 border border-blue-200'
+                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                 }`}>
                   <span>Tofauti (Variance):</span>
                   <span className="font-mono">
@@ -1108,7 +1083,7 @@ export const CalendarScreen: React.FC = () => {
                   placeholder="Mfano: Mteja alirudisha chenji baadaye"
                   value={reconcileNotes}
                   onChange={e => setReconcileNotes(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-blue-500 focus:outline-hidden"
+                  className="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1122,7 +1097,7 @@ export const CalendarScreen: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs btn-press"
+                  className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs btn-press"
                 >
                   Thibitisha Kufunga Droo
                 </button>

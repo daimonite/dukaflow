@@ -4,20 +4,16 @@ import {
   Shield,
   AlertTriangle,
   History,
-  FileCode,
   DollarSign,
   Download,
   RotateCcw,
   CheckCircle2,
   Lock,
   Layers,
-  Copy,
-  Check,
   Eye,
   Coins,
   Settings,
   Store,
-  Key,
   Save,
   Trash2,
   Phone,
@@ -45,14 +41,12 @@ export const AdminAuditScreen: React.FC = () => {
   } = useShop();
 
   const [severityFilter, setSeverityFilter] = useState<'all' | AuditSeverity>('all');
-  const [copiedSql, setCopiedSql] = useState(false);
 
   // Store Settings state
   const [storeName, setStoreName] = useState(settings.storeName);
   const [storeLocation, setStoreLocation] = useState(settings.storeLocation);
   const [storePhone, setStorePhone] = useState(settings.storePhone);
   const [adminName, setAdminName] = useState(settings.adminName);
-  const [adminPin, setAdminPin] = useState(settings.adminPin);
   const [managerName, setManagerName] = useState(settings.managerName);
   const [receiptFooter, setReceiptFooter] = useState(settings.receiptFooter);
   const [settingsSaved, setSettingsSaved] = useState(false);
@@ -62,23 +56,17 @@ export const AdminAuditScreen: React.FC = () => {
     setStoreLocation(settings.storeLocation);
     setStorePhone(settings.storePhone);
     setAdminName(settings.adminName);
-    setAdminPin(settings.adminPin);
     setManagerName(settings.managerName);
     setReceiptFooter(settings.receiptFooter);
   }, [settings]);
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminPin || adminPin.trim().length < 4) {
-      alert('Tafadhali weka PIN ya admin yenye angalau tarakimu 4.');
-      return;
-    }
     updateSettings({
       storeName: storeName.trim(),
       storeLocation: storeLocation.trim(),
       storePhone: (storePhone ?? '').trim(),
       adminName: adminName.trim(),
-      adminPin: adminPin.trim(),
       managerName: managerName.trim(),
       receiptFooter: (receiptFooter ?? '').trim(),
     });
@@ -124,6 +112,12 @@ export const AdminAuditScreen: React.FC = () => {
 
   const alertCount = auditLogs.filter(l => l.severity === 'alert').length;
 
+  const displayAuditValue = (value: unknown) => {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'object') return 'Details updated';
+    return String(value);
+  };
+
   const handleCloseRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const actual = parseFloat(actualCashInput);
@@ -148,217 +142,14 @@ export const AdminAuditScreen: React.FC = () => {
     setShowOpenRegisterModal(false);
   };
 
-  // Full tested Supabase Phase 0 SQL Sync Schema matching app engine
-  const supabaseSqlScript = `-- ====================================================================
--- DUKAFLOW SUPABASE SYNC SCHEMA (PHASE 0 - OFFLINE-FIRST POS SYNC)
--- Run this in your Supabase SQL Editor (Dashboard -> SQL Editor -> New Query).
--- It creates/updates all tables, columns, and sets RLS permissions for the POS anon key.
--- ====================================================================
-
--- 1. Sales (Header & Items)
-create table if not exists sales (
-  id text primary key,
-  receipt_no text unique not null,
-  sold_at timestamptz default now(),
-  customer_id text,
-  customer_name text,
-  customer_phone text,
-  items jsonb,
-  total numeric(14,2) not null,
-  paid_amount numeric(14,2) not null,
-  debt_amount numeric(14,2) default 0,
-  payment_method text not null,
-  payment_reference text,
-  created_by text,
-  sold_by_name text,
-  voided_at timestamptz,
-  void_reason text,
-  voided_by text
-);
-
--- 2. Operating Expenses
-create table if not exists expenses (
-  id text primary key,
-  date timestamptz default now(),
-  spent_on text not null,
-  category text not null,
-  amount numeric(14,2) not null,
-  note text,
-  created_by text,
-  created_at timestamptz default now()
-);
-
--- 3. Stock Purchases (Suppliers)
-create table if not exists purchases (
-  id text primary key,
-  supplier_id text,
-  supplier_name text,
-  invoice_no text,
-  date timestamptz default now(),
-  items jsonb,
-  total numeric(14,2) not null,
-  paid_amount numeric(14,2) not null,
-  debt_amount numeric(14,2) default 0,
-  note text,
-  receipt_url text,
-  created_by text
-);
-
--- 4. Inventory Movements (Stock Adjustments & Shrinkage)
-create table if not exists inventory_movements (
-  id bigserial primary key,
-  product_id text,
-  product_name text,
-  old_qty numeric(14,3),
-  new_qty numeric(14,3),
-  diff numeric(14,3),
-  reason text,
-  adjusted_at timestamptz default now()
-);
-
--- 5. Owner Drawings (Personal Use at Cost)
-create table if not exists owner_drawings (
-  id text primary key,
-  date timestamptz default now(),
-  type text not null,
-  product_id text,
-  product_name text,
-  quantity numeric(14,3),
-  base_unit text,
-  cost_value numeric(14,2) not null,
-  cash_amount numeric(14,2),
-  note text,
-  taken_by text
-);
-
--- 6. Shared Electricity Module (Carry-Forward & Sub-Meters)
-create table if not exists power_members (
-  id text primary key,
-  name text not null,
-  phone text,
-  meter_no text not null,
-  room_or_house text,
-  initial_reading numeric(10,1) default 0
-);
-
-create table if not exists power_periods (
-  id text primary key,
-  month text not null,
-  rate_per_unit numeric(10,2) not null default 413.45,
-  rate_mode text default 'fixed',
-  main_meter_units numeric(10,2),
-  total_bill numeric(14,2),
-  status text not null default 'open',
-  closed_at timestamptz
-);
-
-create table if not exists meter_readings (
-  id text primary key,
-  period_id text,
-  member_id text,
-  previous_reading numeric(10,1) not null,
-  current_reading numeric(10,1) not null,
-  units_used numeric(10,1) not null,
-  rate_charged numeric(10,2) not null,
-  current_charge numeric(14,2) not null,
-  carried_forward_debt numeric(14,2) not null default 0,
-  total_due numeric(14,2) not null,
-  paid_amount numeric(14,2) not null default 0,
-  closing_balance numeric(14,2) not null
-);
-
-create table if not exists power_payments (
-  id text primary key,
-  member_id text,
-  member_name text,
-  period_id text,
-  amount numeric(14,2) not null,
-  paid_at timestamptz default now(),
-  recorded_by text,
-  reference text,
-  payment_method text
-);
-
--- 7. Customers & Debtors Ledger
-create table if not exists customers (
-  id text primary key,
-  name text not null,
-  phone text,
-  is_regular boolean default true,
-  credit_limit numeric(14,2) default 50000,
-  current_balance numeric(14,2) default 0
-);
-
-create table if not exists suppliers (
-  id text primary key,
-  name text not null,
-  phone text,
-  contact_person text
-);
-
-create table if not exists ledger_entries (
-  id text primary key,
-  party_type text not null,
-  party_id text not null,
-  direction text not null,
-  amount numeric(14,2) not null,
-  ref_sale_id text,
-  items_summary text,
-  note text,
-  payment_method text,
-  payment_reference text,
-  created_at timestamptz default now(),
-  created_by text
-);
-
--- 8. Immutable Audit Log
-create table if not exists audit_log (
-  id bigserial primary key,
-  at timestamptz default now(),
-  user_id text,
-  user_name text,
-  table_name text not null,
-  record_id text,
-  action text not null,
-  old_value jsonb,
-  new_value jsonb,
-  reason text not null,
-  severity text not null
-);
-
--- ====================================================================
--- ROW LEVEL SECURITY (RLS) PERMISSIONS FOR OFFLINE POS SYNC
--- ====================================================================
-
-alter table if exists sales disable row level security;
-alter table if exists expenses disable row level security;
-alter table if exists purchases disable row level security;
-alter table if exists inventory_movements disable row level security;
-alter table if exists owner_drawings disable row level security;
-alter table if exists power_members disable row level security;
-alter table if exists power_periods disable row level security;
-alter table if exists meter_readings disable row level security;
-alter table if exists power_payments disable row level security;
-alter table if exists customers disable row level security;
-alter table if exists suppliers disable row level security;
-alter table if exists ledger_entries disable row level security;
-alter table if exists audit_log disable row level security;
-`;
-
-  const copySqlToClipboard = () => {
-    navigator.clipboard.writeText(supabaseSqlScript);
-    setCopiedSql(true);
-    setTimeout(() => setCopiedSql(false), 2500);
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-6">
       
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div>
           <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-purple-600" />
+            <Shield className="w-5 h-5 text-emerald-600" />
             <span>Admin & Kumbukumbu za Mfumo (Audit Log)</span>
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -374,7 +165,7 @@ alter table if exists audit_log disable row level security;
                 setActualCashInput(cashRegister.expected_closing.toString());
                 setShowCloseRegisterModal(true);
               }}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Coins className="w-4 h-4" />
               <span>Funga Droo ya Pesa ya Siku (Reconcile)</span>
@@ -392,10 +183,10 @@ alter table if exists audit_log disable row level security;
       </div>
 
       {/* Store Settings & Security Card */}
-      <div className="bg-white p-5 rounded-3xl border border-orange-100 shadow-xs space-y-4">
+      <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <Store className="w-5 h-5 text-orange-500" />
+            <Store className="w-5 h-5 text-emerald-500" />
             <div>
               <h3 className="font-extrabold text-sm text-gray-900">
                 Mipangilio ya Duka & PIN ya Usalama
@@ -425,7 +216,7 @@ alter table if exists audit_log disable row level security;
                 value={storeName}
                 onChange={e => setStoreName(e.target.value)}
                 placeholder="Mf. Neema Super Duka"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -439,7 +230,7 @@ alter table if exists audit_log disable row level security;
                 value={storeLocation}
                 onChange={e => setStoreLocation(e.target.value)}
                 placeholder="Mf. Arusha au Kariakoo"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -453,7 +244,7 @@ alter table if exists audit_log disable row level security;
                 value={storePhone}
                 onChange={e => setStorePhone(e.target.value)}
                 placeholder="Mf. 0754 000 000"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono font-medium focus:border-orange-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono font-medium focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
           </div>
@@ -469,22 +260,7 @@ alter table if exists audit_log disable row level security;
                 value={adminName}
                 onChange={e => setAdminName(e.target.value)}
                 placeholder="Mama Neema"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1 flex items-center gap-1">
-                <Key className="w-3.5 h-3.5 text-purple-600" />
-                <span>PIN ya Admin (Tarakimu 4+):</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={adminPin}
-                onChange={e => setAdminPin(e.target.value)}
-                placeholder="1234"
-                className="w-full px-3 py-2 rounded-xl border border-purple-200 text-xs font-mono font-bold focus:border-purple-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -498,7 +274,7 @@ alter table if exists audit_log disable row level security;
                 value={managerName}
                 onChange={e => setManagerName(e.target.value)}
                 placeholder="Baraka"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
           </div>
@@ -512,14 +288,14 @@ alter table if exists audit_log disable row level security;
               value={receiptFooter}
               onChange={e => setReceiptFooter(e.target.value)}
               placeholder="Asante kwa kufanya biashara nasi! Karibu tena."
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-orange-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
           <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>Hifadhi Mipangilio ya Duka</span>
@@ -529,7 +305,7 @@ alter table if exists audit_log disable row level security;
       </div>
 
       {/* Cash Drawer Status Card */}
-      <div className="bg-white p-5 rounded-3xl border border-orange-100 shadow-xs space-y-3">
+      <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Coins className="w-5 h-5 text-amber-600" />
@@ -570,9 +346,9 @@ alter table if exists audit_log disable row level security;
             </span>
           </div>
 
-          <div className="p-3 bg-orange-50/60 rounded-2xl border border-orange-100">
-            <span className="text-orange-700 block font-bold">Pesa Inayotarajiwa Drooni:</span>
-            <span className="font-mono font-extrabold text-base text-orange-950">
+          <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100">
+            <span className="text-emerald-700 block font-bold">Pesa Inayotarajiwa Drooni:</span>
+            <span className="font-mono font-extrabold text-base text-emerald-950">
               {formatTsh(cashRegister.expected_closing)}
             </span>
           </div>
@@ -591,11 +367,11 @@ alter table if exists audit_log disable row level security;
       </div>
 
       {/* Audit Log Table */}
-      <div className="bg-white rounded-3xl border border-orange-100 shadow-xs p-4 sm:p-5 space-y-4">
+      <div className="bg-white rounded-3xl border border-emerald-100 shadow-xs p-4 sm:p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-gray-100">
           <div>
             <h3 className="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
-              <History className="w-4 h-4 text-purple-600" />
+              <History className="w-4 h-4 text-emerald-600" />
               <span>Kumbukumbu ya Vitendo na Mabadiliko (Audit Trail)</span>
             </h3>
             <p className="text-xs text-gray-400">
@@ -608,7 +384,7 @@ alter table if exists audit_log disable row level security;
             <button
               onClick={() => setSeverityFilter('all')}
               className={`px-3 py-1 rounded-xl font-bold ${
-                severityFilter === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600'
+                severityFilter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
               Zote ({auditLogs.length})
@@ -641,7 +417,7 @@ alter table if exists audit_log disable row level security;
                 className={`p-3.5 rounded-2xl border text-xs transition-all ${
                   isAlert
                     ? 'bg-red-50/40 border-red-200'
-                    : 'bg-orange-50/20 border-orange-100'
+                    : 'bg-emerald-50/20 border-emerald-100'
                 }`}
               >
                 <div className="flex items-center justify-between font-bold mb-1">
@@ -668,8 +444,8 @@ alter table if exists audit_log disable row level security;
                 {/* Values diff */}
                 {log.old_value && log.new_value && (
                   <div className="mt-2 p-2 bg-white/80 rounded-xl border border-gray-100 text-[11px] font-mono flex items-center gap-4 text-gray-600">
-                    <div>Awali: <span className="text-gray-800 font-bold">{JSON.stringify(log.old_value)}</span></div>
-                    <div>→ Sasa: <span className="text-orange-700 font-bold">{JSON.stringify(log.new_value)}</span></div>
+                    <div>Awali: <span className="text-gray-800 font-bold">{displayAuditValue(log.old_value)}</span></div>
+                    <div>→ Sasa: <span className="text-emerald-700 font-bold">{displayAuditValue(log.new_value)}</span></div>
                   </div>
                 )}
 
@@ -683,38 +459,11 @@ alter table if exists audit_log disable row level security;
         </div>
       </div>
 
-      {/* Supabase Phase 0 SQL Migration Script Viewer */}
-      <div className="bg-white rounded-3xl border border-orange-100 shadow-xs p-4 sm:p-5 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-gray-100">
-          <div>
-            <h3 className="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
-              <FileCode className="w-4 h-4 text-emerald-600" />
-              <span>Script ya Supabase / Postgres Migration (Phase 0)</span>
-            </h3>
-            <p className="text-xs text-gray-400">
-              Msimbo kamili wa SQL uliojaribiwa na kuthibitishwa wenye majedwali, RLS policies na triggers.
-            </p>
-          </div>
-
-          <button
-            onClick={copySqlToClipboard}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
-          >
-            {copiedSql ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            <span>{copiedSql ? 'Imenakiliwa!' : 'Nakili SQL Script'}</span>
-          </button>
-        </div>
-
-        <div className="p-3 bg-gray-900 text-emerald-400 rounded-2xl font-mono text-xs overflow-x-auto max-h-52">
-          <pre>{supabaseSqlScript}</pre>
-        </div>
-      </div>
-
       {/* Data Management & Start Fresh */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xs p-5 space-y-4">
         <div>
           <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
-            <RotateCcw className="w-4 h-4 text-orange-500" />
+            <RotateCcw className="w-4 h-4 text-emerald-500" />
             <span>Usimamizi wa Data & Hifadhi (Data Management)</span>
           </h4>
           <p className="text-xs text-gray-400 mt-0.5">
@@ -727,13 +476,13 @@ alter table if exists audit_log disable row level security;
           <button
             type="button"
             onClick={exportDatabaseJSON}
-            className="p-3.5 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 rounded-2xl flex flex-col items-start gap-1 text-left transition-colors cursor-pointer"
+            className="p-3.5 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 rounded-2xl flex flex-col items-start gap-1 text-left transition-colors cursor-pointer"
           >
-            <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-              <Download className="w-4 h-4 text-blue-600" />
-              <span>Pakua Nakala (JSON)</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+              <Download className="w-4 h-4 text-emerald-600" />
+              <span>Pakua nakala ya data</span>
             </div>
-            <p className="text-[11px] text-blue-700 leading-tight">
+            <p className="text-[11px] text-emerald-700 leading-tight">
               Hifadhi faili la nakala (backup) kwenye simu au kompyuta yako.
             </p>
           </button>
@@ -786,9 +535,9 @@ alter table if exists audit_log disable row level security;
         </p>
 
         <form onSubmit={handleCloseRegisterSubmit} className="space-y-3">
-          <div className="p-2.5 bg-orange-50 rounded-xl text-xs">
+          <div className="p-2.5 bg-emerald-50 rounded-xl text-xs">
             <span className="text-gray-500 block">Pesa Inayotarajiwa:</span>
-            <span className="font-mono font-black text-sm text-orange-950">
+            <span className="font-mono font-black text-sm text-emerald-950">
               {formatTsh(cashRegister.expected_closing)}
             </span>
           </div>
@@ -803,7 +552,7 @@ alter table if exists audit_log disable row level security;
               value={actualCashInput}
               onChange={e => setActualCashInput(e.target.value)}
               placeholder="52400"
-              className="w-full px-3 py-2 rounded-xl border border-purple-200 text-sm font-mono font-bold focus:border-purple-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-sm font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
@@ -829,7 +578,7 @@ alter table if exists audit_log disable row level security;
               value={registerNotes}
               onChange={e => setRegisterNotes(e.target.value)}
               placeholder="Mf. Chenji ya 100 ilipungua asubuhi"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-purple-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
@@ -843,7 +592,7 @@ alter table if exists audit_log disable row level security;
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-xs"
+              className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs"
             >
               Funga Hesabu ya Droo
             </button>
@@ -908,3 +657,4 @@ alter table if exists audit_log disable row level security;
     </div>
   );
 };
+

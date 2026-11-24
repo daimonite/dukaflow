@@ -28,7 +28,7 @@ export const translations = {
     manager: 'Meneja wa Duka (Family)',
     powerAdmin: 'Msimamizi wa Umeme',
     switchRole: 'Badilisha Nafasi',
-    enterPin: 'Weka PIN ya Admin (1234)',
+    enterPin: 'Weka PIN ya Admin',
     
     // POS
     searchProduct: 'Tafuta bidhaa au piga namba...',
@@ -145,7 +145,7 @@ export const translations = {
     manager: 'Shop Manager (Family)',
     powerAdmin: 'Power Billing Admin',
     switchRole: 'Switch Role',
-    enterPin: 'Enter Admin PIN (1234)',
+    enterPin: 'Enter Admin PIN',
     
     // POS
     searchProduct: 'Search products or scan...',

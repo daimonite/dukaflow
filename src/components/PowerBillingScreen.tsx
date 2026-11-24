@@ -30,6 +30,7 @@ export const PowerBillingScreen: React.FC = () => {
     meterReadings,
     powerPayments,
     addPowerMember,
+    startPowerPeriod,
     recordPowerReading,
     recordPowerPayment,
     updatePowerRate,
@@ -75,7 +76,7 @@ export const PowerBillingScreen: React.FC = () => {
 
   const [showRateModal, setShowRateModal] = useState(false);
   const [rateMode, setRateMode] = useState<'fixed' | 'derived'>('fixed');
-  const [rateInput, setRateInput] = useState('413.45');
+  const [rateInput, setRateInput] = useState('400.13');
   const [mainMeterUnitsInput, setMainMeterUnitsInput] = useState('320');
   const [totalLukuBillInput, setTotalLukuBillInput] = useState('150000');
 
@@ -159,7 +160,7 @@ export const PowerBillingScreen: React.FC = () => {
   // Update rate submit
   const handleSaveRate = (e: React.FormEvent) => {
     e.preventDefault();
-    const rateNum = parseFloat(rateInput) || 413.45;
+    const rateNum = parseFloat(rateInput) || 400.13;
     const mainUnits = parseFloat(mainMeterUnitsInput);
     const totalBill = parseFloat(totalLukuBillInput);
 
@@ -204,18 +205,42 @@ export const PowerBillingScreen: React.FC = () => {
 
   // WhatsApp individual statement text
   const getWhatsAppPowerBill = (member: PowerMember, reading: MeterReading) => {
-    const text = `*ANKARA YA UMEME WA PAMOJA - ${activePeriod.month_label.toUpperCase()}*%0A------------------------------------%0AJirani: *${member.name}* (${member.room_or_house})%0AMita No: *${member.meter_no}*%0A------------------------------------%0A• Kipimo cha Nyuma: *${reading.previous_reading}*%0A• Kipimo cha Sasa: *${reading.current_reading}*%0A• Uniti Ulizotumia: *${reading.units_used} uniti*%0A• Bei kwa Uniti: *${formatTsh(reading.rate_charged)}*%0A------------------------------------%0A• Gharama ya Mwezi Huu: *${formatTsh(reading.current_charge)}*%0A• Deni Lililobaki Nyuma: *${formatTsh(reading.carried_forward_debt)}*%0A*JUMLA YA KULIPA: ${formatTsh(reading.total_due)}*%0A• Ulicholipa: *${formatTsh(reading.paid_amount)}*%0A*BAKI YA DENI: ${formatTsh(reading.closing_balance)}*%0A------------------------------------%0A${reading.closing_balance <= 0 ? '✅ Umelipa kikamilifu! Asante sana.' : '⚠️ Tafadhali kamilisha malipo ili kununua LUKU ya mwezi.'}`;
+    const text = `*ANKARA YA UMEME WA PAMOJA - ${activePeriod.month_label.toUpperCase()}*%0A------------------------------------%0ADuka: *${member.name}* (${member.room_or_house})%0AMita No: *${member.meter_no}*%0A------------------------------------%0A• Kipimo cha Nyuma: *${reading.previous_reading}*%0A• Kipimo cha Sasa: *${reading.current_reading}*%0A• Uniti Ulizotumia: *${reading.units_used} uniti*%0A• Bei kwa Uniti: *${formatTsh(reading.rate_charged)}*%0A------------------------------------%0A• Gharama ya Mwezi Huu: *${formatTsh(reading.current_charge)}*%0A• Deni Lililobaki Nyuma: *${formatTsh(reading.carried_forward_debt)}*%0A*JUMLA YA KULIPA: ${formatTsh(reading.total_due)}*%0A• Ulicholipa: *${formatTsh(reading.paid_amount)}*%0A*BAKI YA DENI: ${formatTsh(reading.closing_balance)}*%0A------------------------------------%0A${reading.closing_balance <= 0 ? '✅ Umelipa kikamilifu! Asante sana.' : '⚠️ Tafadhali kamilisha malipo ili kununua LUKU ya mwezi.'}`;
     return `https://wa.me/${member.phone.replace(/[^0-9]/g, '')}?text=${text}`;
   };
+
+  if (!activePeriod) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <div className="rounded-3xl border border-emerald-100 bg-white p-6 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+            <Zap className="h-6 w-6" />
+          </div>
+          <h2 className="text-lg font-extrabold text-gray-900">Anza kipindi cha umeme</h2>
+          <p className="mt-2 text-sm text-gray-600">Fungua mwezi wa sasa ili uanze kuweka vipimo vya mita na malipo.</p>
+          <button
+            onClick={() => {
+              startPowerPeriod();
+              const now = new Date();
+              setSelectedPeriodId(`period-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+            }}
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+          >
+            <Plus className="h-4 w-4" /> Anza kipindi cha sasa
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-5">
       
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
               <Zap className="w-4 h-4" />
             </div>
             <h2 className="text-lg font-extrabold text-gray-900">
@@ -223,7 +248,7 @@ export const PowerBillingScreen: React.FC = () => {
             </h2>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Gawana bili ya umeme wa LUKU / TANESCO kwa sub-meters. Madeni yanabebwa mbele kiotomatiki bila kupoteza historia.
+            Matumizi = kipimo cha sasa − kipimo cha mwisho. Kiasi cha kulipa = matumizi × bei ya uniti.
           </p>
         </div>
 
@@ -232,7 +257,7 @@ export const PowerBillingScreen: React.FC = () => {
           <select
             value={selectedPeriodId}
             onChange={e => setSelectedPeriodId(e.target.value)}
-            className="px-3 py-2 bg-orange-50/60 border border-orange-200 rounded-xl text-xs font-bold text-orange-950 focus:outline-hidden"
+            className="px-3 py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-950 focus:outline-hidden"
           >
             {powerPeriods.map(p => (
               <option key={p.id} value={p.id}>
@@ -248,7 +273,7 @@ export const PowerBillingScreen: React.FC = () => {
                 setRateInput(activePeriod.rate_per_unit.toString());
                 setShowRateModal(true);
               }}
-              className="px-3 py-2 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
               <Edit2 className="w-3.5 h-3.5" />
               <span>Kiwango: {formatTsh(activePeriod.rate_per_unit)}/uniti</span>
@@ -261,14 +286,14 @@ export const PowerBillingScreen: React.FC = () => {
             className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>Ongeza Jirani</span>
+              <span>Ongeza Duka</span>
           </button>
 
           {/* Close Month Button (Admin only) */}
           {!isPeriodClosed && (
             <button
               onClick={handleCloseMonth}
-              className="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold shadow-xs shadow-orange-500/20 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs shadow-emerald-500/20 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Funga Mwezi & Beba Madeni</span>
@@ -279,7 +304,7 @@ export const PowerBillingScreen: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Uniti Zote Zilizotumika
           </span>
@@ -291,11 +316,11 @@ export const PowerBillingScreen: React.FC = () => {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Jumla ya Ankara ya Mwezi
           </span>
-          <div className="text-2xl font-black text-blue-900 mt-1 font-mono">
+          <div className="text-2xl font-black text-emerald-900 mt-1 font-mono">
             {formatTsh(totalBilled)}
           </div>
           <span className="text-[11px] text-gray-500 mt-0.5 block">
@@ -303,7 +328,7 @@ export const PowerBillingScreen: React.FC = () => {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Kiasi Kilichokusanywa
           </span>
@@ -327,7 +352,7 @@ export const PowerBillingScreen: React.FC = () => {
             {formatTsh(totalOutstanding)}
           </div>
           <span className="text-[11px] text-gray-600 mt-0.5 block">
-            Majirani {unpaidMembers.length} bado hawajamaliza
+                Maduka {unpaidMembers.length} bado hayajalipa
           </span>
         </div>
       </div>
@@ -360,7 +385,7 @@ export const PowerBillingScreen: React.FC = () => {
       )}
 
       {/* Main Table: Members & Meter Readings */}
-      <div className="bg-white rounded-3xl border border-orange-100 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-3xl border border-emerald-100 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <span className="font-extrabold text-sm text-gray-800">
             Jedwali la Bili na Vipimo vya Mita ({activePeriod.month_label})
@@ -374,9 +399,9 @@ export const PowerBillingScreen: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-orange-50/40 text-gray-500 font-semibold border-b border-orange-100">
+            <thead className="bg-emerald-50/40 text-gray-500 font-semibold border-b border-emerald-100">
               <tr>
-                <th className="py-3 px-4">Jirani / Mwanachama</th>
+                <th className="py-3 px-4">Duka / Mpangaji</th>
                 <th className="py-3 px-3">Mita No / Chumba</th>
                 <th className="py-3 px-3 text-right">Kipimo cha Nyuma</th>
                 <th className="py-3 px-3 text-right">Kipimo cha Sasa</th>
@@ -400,7 +425,7 @@ export const PowerBillingScreen: React.FC = () => {
                 const hasCredit = reading.closing_balance < 0;
 
                 return (
-                  <tr key={reading.id} className="hover:bg-orange-50/20 transition-colors">
+                  <tr key={reading.id} className="hover:bg-emerald-50/20 transition-colors">
                     {/* Name */}
                     <td className="py-3 px-4">
                       <div className="font-bold text-gray-900">{member.name}</div>
@@ -424,7 +449,7 @@ export const PowerBillingScreen: React.FC = () => {
                     </td>
 
                     {/* Units used */}
-                    <td className="py-3 px-3 text-right font-mono font-extrabold text-blue-900">
+                    <td className="py-3 px-3 text-right font-mono font-extrabold text-emerald-900">
                       {reading.units_used}
                     </td>
 
@@ -458,7 +483,7 @@ export const PowerBillingScreen: React.FC = () => {
                     <td className="py-3 px-3 text-right font-mono font-black">
                       {isPaid ? (
                         hasCredit ? (
-                          <span className="text-blue-700">Ziada: {formatTsh(Math.abs(reading.closing_balance))}</span>
+                          <span className="text-emerald-700">Ziada: {formatTsh(Math.abs(reading.closing_balance))}</span>
                         ) : (
                           <span className="text-emerald-700">0 TSh</span>
                         )
@@ -493,7 +518,7 @@ export const PowerBillingScreen: React.FC = () => {
                               setReadingModalData({ member, reading });
                               setReadingInput(reading.current_reading > 0 ? reading.current_reading.toString() : '');
                             }}
-                            className="p-1.5 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="p-1.5 rounded-lg text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                             title="Weka Kipimo cha Mita"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -550,7 +575,7 @@ export const PowerBillingScreen: React.FC = () => {
                   Weka Kipimo cha Mita (Current Reading)
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Jirani: <span className="font-bold text-gray-800">{readingModalData.member.name}</span> ({readingModalData.member.meter_no})
+                  Duka: <span className="font-bold text-gray-800">{readingModalData.member.name}</span> ({readingModalData.member.meter_no})
                 </p>
               </div>
               <button
@@ -581,12 +606,12 @@ export const PowerBillingScreen: React.FC = () => {
                   value={readingInput}
                   onChange={e => setReadingInput(e.target.value)}
                   placeholder="Mf. 1475.0"
-                  className="w-full px-3 py-2.5 rounded-xl border border-blue-200 text-sm font-mono font-bold focus:border-blue-500 focus:outline-hidden shadow-2xs"
+                  className="w-full px-3 py-2.5 rounded-xl border border-emerald-200 text-sm font-mono font-bold focus:border-emerald-500 focus:outline-hidden shadow-2xs"
                 />
               </div>
 
               {parseFloat(readingInput) > readingModalData.reading.previous_reading && (
-                <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 text-xs text-blue-900 space-y-1">
+                <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100 text-xs text-emerald-900 space-y-1">
                   <div className="flex justify-between">
                     <span>Uniti zilizotumika:</span>
                     <span className="font-mono font-bold">
@@ -595,7 +620,7 @@ export const PowerBillingScreen: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Gharama ya mwezi huu:</span>
-                    <span className="font-mono font-bold text-blue-950">
+                    <span className="font-mono font-bold text-emerald-950">
                       {formatTsh((parseFloat(readingInput) - readingModalData.reading.previous_reading) * activePeriod.rate_per_unit)}
                     </span>
                   </div>
@@ -612,7 +637,7 @@ export const PowerBillingScreen: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
+                  className="px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
                   Hifadhi Kipimo
                 </button>
@@ -636,7 +661,7 @@ export const PowerBillingScreen: React.FC = () => {
                   Rekodi Malipo ya Umeme
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Jirani: <span className="font-bold text-gray-800">{paymentModalData.member.name}</span> ({paymentModalData.member.meter_no})
+                  Duka: <span className="font-bold text-gray-800">{paymentModalData.member.name}</span> ({paymentModalData.member.meter_no})
                 </p>
               </div>
               <button
@@ -649,14 +674,14 @@ export const PowerBillingScreen: React.FC = () => {
             </div>
 
             <form onSubmit={handleSavePayment} className="space-y-3.5">
-              <div className="bg-orange-50/70 p-3 rounded-2xl border border-orange-200 text-xs flex items-center justify-between">
+              <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200 text-xs flex items-center justify-between">
                 <div>
                   <span className="text-gray-600 block text-[11px] font-semibold">Anayodaiwa Mwezi Huu:</span>
-                  <span className="font-mono font-black text-base text-orange-900">
+                  <span className="font-mono font-black text-base text-emerald-900">
                     {formatTsh(paymentModalData.reading.closing_balance)}
                   </span>
                 </div>
-                <span className="text-xs font-bold bg-orange-200 text-orange-900 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">
                   LUKU
                 </span>
               </div>
@@ -721,10 +746,10 @@ export const PowerBillingScreen: React.FC = () => {
                           ? pm === 'mpesa'
                             ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                             : pm === 'tigopesa'
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                             : pm === 'airtel'
                             ? 'bg-red-600 text-white border-red-600 shadow-xs'
-                            : 'bg-orange-600 text-white border-orange-600 shadow-xs'
+                            : 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                           : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                       }`}
                     >
@@ -797,7 +822,7 @@ export const PowerBillingScreen: React.FC = () => {
               )}
               <div className="flex justify-between border-t border-gray-200 pt-1 font-bold">
                 <span className="text-gray-700">Baki ya Mwezi Huu:</span>
-                <span className="text-orange-700 font-mono">{formatTsh(lastPowerReceipt.remaining)}</span>
+                <span className="text-emerald-700 font-mono">{formatTsh(lastPowerReceipt.remaining)}</span>
               </div>
             </div>
 
@@ -857,7 +882,7 @@ export const PowerBillingScreen: React.FC = () => {
                   onClick={() => setRateMode('fixed')}
                   className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     rateMode === 'fixed'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                       : 'bg-gray-50 text-gray-700 border-gray-200'
                   }`}
                 >
@@ -868,7 +893,7 @@ export const PowerBillingScreen: React.FC = () => {
                   onClick={() => setRateMode('derived')}
                   className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     rateMode === 'derived'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                       : 'bg-gray-50 text-gray-700 border-gray-200'
                   }`}
                 >
@@ -888,11 +913,11 @@ export const PowerBillingScreen: React.FC = () => {
                   required
                   value={rateInput}
                   onChange={e => setRateInput(e.target.value)}
-                  placeholder="413.45"
-                  className="w-full px-3 py-2.5 rounded-xl border border-blue-200 text-sm font-mono font-bold focus:border-blue-500 focus:outline-hidden"
+                  placeholder="400.13"
+                  className="w-full px-3 py-2.5 rounded-xl border border-emerald-200 text-sm font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
                 />
                 <span className="text-[10px] text-gray-500 block mt-1">
-                  Bei ya kawaida ya LUKU Tanzania ni takriban 413.45 TSh kwa uniti moja.
+                  Bei ya kawaida ni 400.13 TSh kwa uniti. Unaweza kuibadilisha wakati wowote.
                 </span>
               </div>
             ) : (
@@ -926,7 +951,7 @@ export const PowerBillingScreen: React.FC = () => {
                 </div>
 
                 {parseFloat(mainMeterUnitsInput) > 0 && (
-                  <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-900 font-semibold">
+                  <div className="p-3 bg-emerald-50 rounded-xl text-xs text-emerald-900 font-semibold">
                     Bei itakayotumika: {(parseFloat(totalLukuBillInput) / parseFloat(mainMeterUnitsInput)).toFixed(2)} TSh / uniti (inagawa upotevu wa nyaya kwa usawa).
                   </div>
                 )}
@@ -943,7 +968,7 @@ export const PowerBillingScreen: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
+                className="px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
               >
                 Hifadhi Kiwango
               </button>
@@ -960,7 +985,7 @@ export const PowerBillingScreen: React.FC = () => {
       >
         <div className="p-5 sm:p-6">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-            <h3 className="font-extrabold text-base text-gray-900">Ongeza Jirani / Chumba cha Umeme</h3>
+            <h3 className="font-extrabold text-base text-gray-900">Ongeza Duka / Mpangaji</h3>
             <button
               type="button"
               onClick={() => setShowMemberModal(false)}
@@ -972,14 +997,14 @@ export const PowerBillingScreen: React.FC = () => {
 
           <form onSubmit={handleAddMember} className="space-y-3.5">
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Jina Kamili:</label>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Jina la duka / mpangaji:</label>
               <input
                 type="text"
                 required
                 value={newMemberName}
                 onChange={e => setNewMemberName(e.target.value)}
-                placeholder="Mf. Juma Mwangi au Asha"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:border-blue-500 focus:outline-hidden"
+                placeholder="Mf. Duka la Asha"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -990,7 +1015,7 @@ export const PowerBillingScreen: React.FC = () => {
                 value={newMemberPhone}
                 onChange={e => setNewMemberPhone(e.target.value)}
                 placeholder="0754 991 122"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:border-blue-500 focus:outline-hidden"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -1001,7 +1026,7 @@ export const PowerBillingScreen: React.FC = () => {
                 value={newMemberMeterNo}
                 onChange={e => setNewMemberMeterNo(e.target.value)}
                 placeholder="SUB-MTR-06"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-mono focus:border-blue-500 focus:outline-hidden"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-mono focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -1011,8 +1036,8 @@ export const PowerBillingScreen: React.FC = () => {
                 type="text"
                 value={newMemberRoom}
                 onChange={e => setNewMemberRoom(e.target.value)}
-                placeholder="Mf. Chumba C2 (Mbele)"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:border-blue-500 focus:outline-hidden"
+                placeholder="Mf. Duka la mbele"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -1024,7 +1049,7 @@ export const PowerBillingScreen: React.FC = () => {
                 value={newMemberInitialReading}
                 onChange={e => setNewMemberInitialReading(e.target.value)}
                 placeholder="0"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-mono focus:border-blue-500 focus:outline-hidden"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs font-mono focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
 
@@ -1038,9 +1063,9 @@ export const PowerBillingScreen: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
+                className="px-5 py-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
               >
-                Hifadhi Jirani
+                Hifadhi Duka
               </button>
             </div>
           </form>

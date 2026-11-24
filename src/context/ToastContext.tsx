@@ -20,14 +20,14 @@ const ICONS: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />,
   error:   <XCircle      className="w-4 h-4 text-red-500    flex-shrink-0" />,
   warning: <AlertTriangle className="w-4 h-4 text-amber-500  flex-shrink-0" />,
-  info:    <Info          className="w-4 h-4 text-blue-500   flex-shrink-0" />,
+  info:    <Info          className="w-4 h-4 text-emerald-500   flex-shrink-0" />,
 };
 
 const BG: Record<ToastType, string> = {
   success: 'bg-emerald-50 border-emerald-200 text-emerald-900',
   error:   'bg-red-50    border-red-200    text-red-900',
   warning: 'bg-amber-50  border-amber-200  text-amber-900',
-  info:    'bg-blue-50   border-blue-200   text-blue-900',
+  info:    'bg-emerald-50   border-emerald-200   text-emerald-900',
 };
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

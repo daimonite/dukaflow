@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useShop } from '../context/ShopContext';
-import { useSync } from '../context/SyncContext';
 import {
   Package,
   Plus,
@@ -20,23 +19,26 @@ import {
   ChevronRight,
   ArrowRight,
   DollarSign,
-  CloudCheck,
   Building2,
   Store,
   Layers,
   Sparkles,
-  Info
+  Info,
+  ImagePlus
 } from 'lucide-react';
 import { formatTsh, formatQty } from '../utils/translations';
+import { fileToDownscaledDataUrl } from '../utils/image';
+import { defaultReorderLevel } from '../utils/productDefaults';
 import { Product, BaseUnit } from '../types';
 import { Modal } from './Modal';
+import { CatalogPickerModal } from './CatalogPickerModal';
 
 export const StockScreen: React.FC = () => {
   const {
     t,
     products,
     suppliers,
-    addProduct,
+    addProducts,
     updateProductPrice,
     adjustStock,
     addPurchase,
@@ -45,7 +47,6 @@ export const StockScreen: React.FC = () => {
     settings
   } = useShop();
 
-  const { openOutbox, pendingCount, isOnline } = useSync();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,14 +95,17 @@ export const StockScreen: React.FC = () => {
 
   // Add Product Modal state
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [showCatalogModal, setShowCatalogModal] = useState<boolean>(false);
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState('Vyakula (Groceries)');
   const [newBaseUnit, setNewBaseUnit] = useState<BaseUnit>('kg');
   const [newSellPrice, setNewSellPrice] = useState('');
   const [newCostPrice, setNewCostPrice] = useState('');
   const [newStockQty, setNewStockQty] = useState('');
-  const [newReorderLevel, setNewReorderLevel] = useState('10');
+  const [newReorderLevel, setNewReorderLevel] = useState('');
   const [newBarcode, setNewBarcode] = useState('');
+  const [newImage, setNewImage] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
 
   // Financial calculations
   const totalPurchaseCost = useMemo(() => {
@@ -307,6 +311,21 @@ export const StockScreen: React.FC = () => {
     setShowDrawingsModal(false);
   };
 
+  // Product photo: downscaled to a small data URL before it touches storage.
+  const handleProductPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setImageBusy(true);
+    try {
+      setNewImage(await fileToDownscaledDataUrl(file));
+    } catch (err: any) {
+      showToast(err?.message || 'Imeshindikana kupakia picha hiyo', 'warn');
+    } finally {
+      setImageBusy(false);
+    }
+  };
+
   // Submit Add Product
   const handleConfirmAddProduct = () => {
     if (!newName.trim()) {
@@ -316,14 +335,14 @@ export const StockScreen: React.FC = () => {
     const sellPrice = parseFloat(newSellPrice);
     const costPrice = parseFloat(newCostPrice) || (sellPrice * 0.8);
     const stockQty = parseFloat(newStockQty) || 0;
-    const reorder = parseFloat(newReorderLevel) || 10;
+    const reorder = parseFloat(newReorderLevel) || defaultReorderLevel(stockQty);
 
     if (isNaN(sellPrice) || sellPrice <= 0) {
       showToast('Weka bei sahihi ya kuuza', 'warn');
       return;
     }
 
-    addProduct({
+    addProducts([{
       name: newName.trim(),
       category: newCategory,
       base_unit: newBaseUnit,
@@ -332,11 +351,12 @@ export const StockScreen: React.FC = () => {
       stock_qty: stockQty,
       reorder_level: reorder,
       barcode: newBarcode.trim() || undefined,
+      image: newImage || undefined,
       active: true,
       unit_options: [
         { label: `1 ${newBaseUnit}`, factor: 1, use_for_buying: false, use_for_selling: true }
       ]
-    });
+    }]);
 
     showToast(`Bidhaa mpya "${newName}" imeongezwa kwenye stoo!`, 'success');
     setShowAddModal(false);
@@ -345,6 +365,8 @@ export const StockScreen: React.FC = () => {
     setNewCostPrice('');
     setNewStockQty('');
     setNewBarcode('');
+    setNewReorderLevel('');
+    setNewImage(null);
   };
 
   // Barcode mock scan
@@ -357,21 +379,21 @@ export const StockScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-120px)] bg-[#faf8f5] text-gray-900 flex flex-col font-sans pb-24">
+    <div className="min-h-[calc(100vh-120px)] bg-[#f6f8f5] text-gray-900 flex flex-col font-sans pb-24">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
           <div className="bg-gray-950 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-800">
             {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />}
             {toast.type === 'warn' && <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0" />}
-            {toast.type === 'info' && <Info className="w-5 h-5 text-orange-400 flex-shrink-0" />}
+            {toast.type === 'info' && <Info className="w-5 h-5 text-emerald-400 flex-shrink-0" />}
             <span className="text-sm font-semibold">{toast.message}</span>
           </div>
         </div>
       )}
 
       {/* Sub-Header Bar (DukaSmart Identity) */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-orange-100/80 sticky top-[108px] z-20 shadow-xs">
+      <div className="bg-white/90 backdrop-blur-md border-b border-emerald-100/80 sticky top-[108px] z-20 shadow-xs">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <img
@@ -388,33 +410,12 @@ export const StockScreen: React.FC = () => {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <span className="truncate font-medium">{settings.storeName} · {settings.storeLocation}</span>
-                <span className="font-semibold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded-full text-[10px]">
-                  Mtandaoni
-                </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={openOutbox}
-              className={`h-9 px-2.5 flex items-center justify-center gap-1.5 rounded-xl border transition-all cursor-pointer ${
-                !isOnline
-                  ? 'bg-amber-50 border-amber-300 text-amber-900'
-                  : pendingCount > 0
-                  ? 'bg-orange-50 border-orange-300 text-orange-900'
-                  : 'bg-orange-50 border-orange-100 text-orange-600 hover:bg-orange-100'
-              }`}
-              title="Sawazisha na Supabase / Fungua Dexie Outbox"
-            >
-              <CloudCheck className={`w-4 h-4 ${!isOnline ? 'text-amber-600' : 'text-emerald-600'}`} />
-              {pendingCount > 0 && (
-                <span className="bg-orange-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold animate-pulse">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-            <div className="w-9 h-9 rounded-full ring-2 ring-orange-500/30 overflow-hidden flex-shrink-0">
+            <div className="w-9 h-9 rounded-full ring-2 ring-emerald-500/30 overflow-hidden flex-shrink-0">
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzjIFLNSs87xWPqBHiCkT3dJ5IeOFANjwuGprLYvD3mwjMdAX1JQPMZqflwdlWyxEtf54xjHkCWAbT4SM_tgHWrLKIgUyMGLs3IMZ3vRraJTexcrgQCCjkuWKoc7BQ65gnqrxQmTGjk2ueTU4DzwBCkaOzX3ZUQziemxxCRyTTUlgqBFD2v7lRBO1fKry4BbY7mpBAAR83yxVBtgiDPqH2jm5l4LeQ8A9bIiIJbdGX5KU6_LCXTVeD"
                 alt="Profile"
@@ -427,30 +428,30 @@ export const StockScreen: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 w-full pt-4 space-y-4">
         {/* Top Financial Snapshot Banner (Bento-style metrics) */}
-        <section className="bg-white rounded-2xl p-4 sm:p-5 border border-orange-100/80 shadow-xs">
+        <section className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-100/80 shadow-xs">
           <div className="flex items-center justify-between mb-3.5">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                 <Package className="w-4 h-4" />
               </div>
               <span className="font-display text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-700">
                 Thamani ya Stoo (Stock Valuation)
               </span>
             </div>
-            <span className="text-[11px] font-bold text-orange-700 bg-orange-100/80 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
               WAC Model (Weighted Cost)
             </span>
           </div>
 
           {/* Main Valuation Numbers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3.5">
-            <div className="bg-[#fffbf7] border border-orange-100/80 p-3.5 rounded-xl shadow-2xs">
+            <div className="bg-gray-50 border border-emerald-100/80 p-3.5 rounded-xl shadow-2xs">
               <p className="text-xs text-gray-500 font-medium">Gharama ya Ununuzi (Cost)</p>
               <p className="font-display text-xl sm:text-2xl font-bold text-gray-900 mt-1">
                 {formatTsh(totalPurchaseCost)}
               </p>
               <span className="text-[11px] text-gray-500 flex items-center gap-1 mt-1 font-medium">
-                <Store className="w-3.5 h-3.5 text-orange-600" /> Bei ya Jumla (Jumla ya Mtaji Uliopo)
+                <Store className="w-3.5 h-3.5 text-emerald-600" /> Bei ya Jumla (Jumla ya Mtaji Uliopo)
               </span>
             </div>
 
@@ -467,14 +468,14 @@ export const StockScreen: React.FC = () => {
 
           {/* Margin & Alerts Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-orange-500/10 border border-orange-200/60 p-3 rounded-xl flex items-center justify-between">
+            <div className="bg-emerald-500/10 border border-emerald-200/60 p-3 rounded-xl flex items-center justify-between">
               <div>
-                <span className="text-xs text-orange-900 font-medium">Kiwango cha Faida (Projected Margin)</span>
-                <p className="text-[11px] text-orange-700 mt-0.5">
+                <span className="text-xs text-emerald-900 font-medium">Kiwango cha Faida (Projected Margin)</span>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
                   Faida ya Jumla: <span className="font-bold">{formatTsh(Math.max(0, totalExpectedSales - totalPurchaseCost))}</span>
                 </p>
               </div>
-              <span className="font-display text-xl font-bold text-orange-600">
+              <span className="font-display text-xl font-bold text-emerald-600">
                 {projectedMarginPct.toFixed(1)}%
               </span>
             </div>
@@ -505,15 +506,15 @@ export const StockScreen: React.FC = () => {
 
         {/* Quick Action Drawer Bar (Tactile Buttons) */}
         <section>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
             {/* Receive Stock */}
             <button
               onClick={() => handleOpenReceive()}
-              className="flex flex-col items-center justify-center p-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl shadow-sm hover:shadow-md active:scale-98 transition-all text-center min-h-[64px]"
+              className="flex flex-col items-center justify-center p-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-2xl shadow-sm hover:shadow-md active:scale-98 transition-all text-center min-h-[64px]"
             >
               <Truck className="w-5 h-5 mb-1" />
               <span className="text-xs font-bold leading-tight">Ingiza Mzigo</span>
-              <span className="text-[10px] text-orange-100 leading-tight">Pokea bidhaa toka wauzaji</span>
+              <span className="text-[10px] text-emerald-100 leading-tight">Pokea bidhaa toka wauzaji</span>
             </button>
 
             {/* Stocktake Toggle */}
@@ -529,12 +530,12 @@ export const StockScreen: React.FC = () => {
               className={`flex flex-col items-center justify-center p-3 rounded-2xl border active:scale-98 transition-all text-center min-h-[64px] ${
                 showStocktakeBanner
                   ? 'bg-amber-100 border-amber-300 text-amber-900 font-bold'
-                  : 'bg-white border-orange-100 hover:bg-orange-50/50 text-gray-800'
+                  : 'bg-white border-emerald-100 hover:bg-emerald-50/50 text-gray-800'
               }`}
             >
               <div className="relative">
                 <ClipboardCheck className="w-5 h-5 text-amber-600 mb-1" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               </div>
               <span className="text-xs font-bold leading-tight">Hesabu Stoo</span>
               <span className="text-[10px] text-gray-500 leading-tight">Linganisha na mizani</span>
@@ -548,9 +549,9 @@ export const StockScreen: React.FC = () => {
                 }
                 setShowDrawingsModal(true);
               }}
-              className="flex flex-col items-center justify-center p-3 bg-white border border-orange-100 hover:bg-orange-50/50 text-gray-800 rounded-2xl active:scale-98 transition-all text-center min-h-[64px]"
+              className="flex flex-col items-center justify-center p-3 bg-white border border-emerald-100 hover:bg-emerald-50/50 text-gray-800 rounded-2xl active:scale-98 transition-all text-center min-h-[64px]"
             >
-              <ShoppingBag className="w-5 h-5 text-orange-600 mb-1" />
+              <ShoppingBag className="w-5 h-5 text-emerald-600 mb-1" />
               <span className="text-xs font-bold leading-tight">Matumizi Binafsi</span>
               <span className="text-[10px] text-gray-500 leading-tight">Vitu vya nyumbani (Cost)</span>
             </button>
@@ -558,11 +559,21 @@ export const StockScreen: React.FC = () => {
             {/* Add New Product */}
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-white border border-orange-100 hover:bg-orange-50/50 text-gray-800 rounded-2xl active:scale-98 transition-all text-center min-h-[64px]"
+              className="flex flex-col items-center justify-center p-3 bg-white border border-emerald-100 hover:bg-emerald-50/50 text-gray-800 rounded-2xl active:scale-98 transition-all text-center min-h-[64px]"
             >
               <Plus className="w-5 h-5 text-emerald-600 mb-1" />
               <span className="text-xs font-bold leading-tight">Ongeza Bidhaa</span>
               <span className="text-[10px] text-gray-500 leading-tight">Sajili bidhaa mpya</span>
+            </button>
+
+            {/* Bulk add from a business-type catalogue */}
+            <button
+              onClick={() => setShowCatalogModal(true)}
+              className="flex flex-col items-center justify-center p-3 bg-white border border-emerald-100 hover:bg-emerald-50/50 text-gray-800 rounded-2xl active:scale-98 transition-all text-center min-h-[64px]"
+            >
+              <Layers className="w-5 h-5 text-emerald-600 mb-1" />
+              <span className="text-xs font-bold leading-tight">Orodha ya Aina</span>
+              <span className="text-[10px] text-gray-500 leading-tight">Chagua bidhaa kwa mkupuo</span>
             </button>
           </div>
         </section>
@@ -602,11 +613,11 @@ export const StockScreen: React.FC = () => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Tafuta bidhaa kwa jina au barcode..."
-                className="w-full h-11 pl-10 pr-11 bg-white border border-orange-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 shadow-2xs"
+                className="w-full h-11 pl-10 pr-11 bg-white border border-emerald-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 shadow-2xs"
               />
               <button
                 onClick={handleMockBarcodeScan}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-orange-50 hover:bg-orange-100 flex items-center justify-center text-orange-600 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600 transition-colors"
                 title="Soma Barcode"
               >
                 <Scan className="w-4 h-4" />
@@ -618,7 +629,7 @@ export const StockScreen: React.FC = () => {
               className={`h-11 px-3.5 rounded-2xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all shadow-2xs ${
                 filterLowStockOnly
                   ? 'bg-red-500 border-red-500 text-white'
-                  : 'bg-white border-orange-100 hover:bg-orange-50 text-gray-700'
+                  : 'bg-white border-emerald-100 hover:bg-emerald-50 text-gray-700'
               }`}
               title="Chuja Zilizopungua"
             >
@@ -638,8 +649,8 @@ export const StockScreen: React.FC = () => {
                 }}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex-shrink-0 transition-all ${
                   selectedCategory === cat.id && !filterLowStockOnly
-                    ? 'bg-orange-600 text-white shadow-sm'
-                    : 'bg-white border border-orange-100 text-gray-600 hover:bg-orange-50/60'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-white border border-emerald-100 text-gray-600 hover:bg-emerald-50/60'
                 }`}
               >
                 {cat.label} ({cat.count})
@@ -651,8 +662,8 @@ export const StockScreen: React.FC = () => {
         {/* Stock Item Cards (Loose & Pack Units) */}
         <section className="space-y-3">
           {filteredProducts.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-orange-200">
-              <Package className="w-12 h-12 text-orange-300 mx-auto mb-2" />
+            <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-emerald-200">
+              <Package className="w-12 h-12 text-emerald-300 mx-auto mb-2" />
               <h3 className="font-bold text-gray-700">Hakuna bidhaa inayolingana</h3>
               <p className="text-xs text-gray-500 mt-1">Jaribu kubadili jina au kategoria kwenye kichujio.</p>
             </div>
@@ -667,13 +678,13 @@ export const StockScreen: React.FC = () => {
               return (
                 <div
                   key={prod.id}
-                  className="bg-white rounded-2xl p-4 sm:p-5 border border-orange-100/90 shadow-2xs hover:shadow-xs transition-shadow"
+                  className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-2xs hover:shadow-xs transition-shadow"
                 >
                   {/* Card Header: Thumbnail, Name, Badges, Edit Price */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
                       {/* Product Thumbnail */}
-                      <div className="relative w-14 h-14 rounded-2xl bg-orange-50 overflow-hidden flex-shrink-0 border border-orange-100 flex items-center justify-center">
+                      <div className="relative w-14 h-14 rounded-2xl bg-emerald-50 overflow-hidden flex-shrink-0 border border-emerald-100 flex items-center justify-center">
                         {prod.image ? (
                           <img
                             src={prod.image}
@@ -681,9 +692,9 @@ export const StockScreen: React.FC = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <Package className="w-7 h-7 text-orange-400" />
+                          <Package className="w-7 h-7 text-emerald-400" />
                         )}
-                        <span className="absolute bottom-0 right-0 bg-orange-600 text-white text-[9px] px-1.5 py-0.2 font-display font-bold uppercase rounded-tl-lg">
+                        <span className="absolute bottom-0 right-0 bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 font-display font-bold uppercase rounded-tl-lg">
                           {prod.base_unit}
                         </span>
                       </div>
@@ -721,7 +732,7 @@ export const StockScreen: React.FC = () => {
                         setNewPriceInput(prod.sell_price.toString());
                         setPriceChangeReason('');
                       }}
-                      className="w-8 h-8 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0 transition-colors"
+                      className="w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 transition-colors"
                       title="Badili Bei"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -729,7 +740,7 @@ export const StockScreen: React.FC = () => {
                   </div>
 
                   {/* Quantity & Stock Valuation Strip */}
-                  <div className="mt-3 bg-[#fffbf7] border border-orange-100/70 rounded-xl p-3">
+                  <div className="mt-3 bg-gray-50 border border-emerald-100/70 rounded-xl p-3">
                     <div className="flex items-baseline justify-between">
                       <span className="text-xs text-gray-500 font-medium">Kiasi Kilichopo Stoo:</span>
                       <div className="text-right">
@@ -754,22 +765,22 @@ export const StockScreen: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-orange-50/70 border border-orange-100/80">
-                      <span className="text-orange-800 block text-[11px] font-medium">Bei ya Rejareja:</span>
-                      <span className="font-display font-bold text-orange-600 text-sm">
+                    <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100/80">
+                      <span className="text-emerald-800 block text-[11px] font-medium">Bei ya Rejareja:</span>
+                      <span className="font-display font-bold text-emerald-600 text-sm">
                         {formatTsh(prod.sell_price)} <span className="text-[10px] text-gray-500 font-normal">/{prod.base_unit}</span>
                       </span>
-                      <span className="block text-[10px] text-orange-700 font-bold">
+                      <span className="block text-[10px] text-emerald-700 font-bold">
                         Faida: {formatTsh(profitMargin)} ({profitPct.toFixed(1)}%)
                       </span>
                     </div>
                   </div>
 
                   {/* Quick Unit Breakdown & CTA Action Button */}
-                  <div className="mt-3 pt-2.5 border-t border-orange-100/60 flex items-center justify-between flex-wrap gap-2">
+                  <div className="mt-3 pt-2.5 border-t border-emerald-100/60 flex items-center justify-between flex-wrap gap-2">
                     {/* Unit chips */}
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="bg-orange-50/80 text-orange-800 border border-orange-100 px-2 py-0.5 rounded-lg text-[11px] font-semibold">
+                      <span className="bg-emerald-50/80 text-emerald-800 border border-emerald-100 px-2 py-0.5 rounded-lg text-[11px] font-semibold">
                         1 {prod.base_unit} = {formatTsh(prod.sell_price)}
                       </span>
                       {prod.unit_options
@@ -799,7 +810,7 @@ export const StockScreen: React.FC = () => {
 
                       <button
                         onClick={() => handleOpenStocktake(prod)}
-                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
                       >
                         <Scale className="w-3.5 h-3.5" />
                         Hesabu / Pima
@@ -823,9 +834,9 @@ export const StockScreen: React.FC = () => {
       >
         {activeStocktakeProduct && (
           <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+            <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <Scale className="w-4 h-4" />
                 </div>
                 <div>
@@ -844,10 +855,10 @@ export const StockScreen: React.FC = () => {
             </div>
 
             {/* Target Product Summary */}
-            <div className="bg-[#fffbf7] border border-orange-100 p-3.5 rounded-2xl space-y-1">
+            <div className="bg-gray-50 border border-emerald-100 p-3.5 rounded-2xl space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-gray-800 text-sm">{activeStocktakeProduct.name}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                   {activeStocktakeProduct.base_unit}
                 </span>
               </div>
@@ -873,7 +884,7 @@ export const StockScreen: React.FC = () => {
                   step="any"
                   value={physicalCountInput}
                   onChange={e => setPhysicalCountInput(e.target.value)}
-                  className="w-full h-13 px-4 text-center font-display text-2xl font-extrabold bg-gray-50 border-2 border-orange-200 focus:border-orange-500 rounded-2xl focus:outline-none"
+                  className="w-full h-13 px-4 text-center font-display text-2xl font-extrabold bg-gray-50 border-2 border-emerald-200 focus:border-emerald-500 rounded-2xl focus:outline-none"
                   placeholder="0.000"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">
@@ -907,7 +918,7 @@ export const StockScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPhysicalCountInput(activeStocktakeProduct.stock_qty.toString())}
-                  className="px-2.5 py-1 text-xs font-bold rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-800"
+                  className="px-2.5 py-1 text-xs font-bold rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800"
                 >
                   Sawa (Reset)
                 </button>
@@ -993,7 +1004,7 @@ export const StockScreen: React.FC = () => {
               <select
                 value={shrinkageReason}
                 onChange={e => setShrinkageReason(e.target.value)}
-                className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               >
                 <option value="Kuharibika / Kumwagika (Spillage/Spoilage)">Kuharibika / Kumwagika (Spillage / Spoilage)</option>
                 <option value="Wizi / Kupotea (Theft / Lost)">Wizi / Kupotea (Theft / Lost)</option>
@@ -1027,7 +1038,7 @@ export const StockScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConfirmStocktake}
-                className="flex-2 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Thibitisha & Hifadhi Hesabu
@@ -1047,9 +1058,9 @@ export const StockScreen: React.FC = () => {
       >
         {editPriceProduct && (
           <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+            <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <Edit3 className="w-4 h-4" />
                 </div>
                 <div>
@@ -1065,7 +1076,7 @@ export const StockScreen: React.FC = () => {
               </button>
             </div>
 
-            <div className="bg-[#fffbf7] border border-orange-100 p-3.5 rounded-2xl space-y-1 text-xs">
+            <div className="bg-gray-50 border border-emerald-100 p-3.5 rounded-2xl space-y-1 text-xs">
               <div className="font-bold text-gray-900 text-sm">{editPriceProduct.name}</div>
               <div className="text-gray-500">
                 Gharama ya Ununuzi (WAC Cost): <b>{formatTsh(editPriceProduct.avg_cost)} /{editPriceProduct.base_unit}</b>
@@ -1081,7 +1092,7 @@ export const StockScreen: React.FC = () => {
                 type="number"
                 value={newPriceInput}
                 onChange={e => setNewPriceInput(e.target.value)}
-                className="w-full h-11 px-3 bg-gray-50 border-2 border-orange-200 focus:border-orange-500 rounded-xl font-display font-bold text-lg text-gray-900 focus:outline-none"
+                className="w-full h-11 px-3 bg-gray-50 border-2 border-emerald-200 focus:border-emerald-500 rounded-xl font-display font-bold text-lg text-gray-900 focus:outline-none"
                 placeholder="Weka bei mpya..."
               />
             </div>
@@ -1110,7 +1121,7 @@ export const StockScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConfirmPriceUpdate}
-                className="flex-2 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Hifadhi Bei Mpya
@@ -1129,9 +1140,9 @@ export const StockScreen: React.FC = () => {
         maxWidth="max-w-lg"
       >
         <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+            <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <Truck className="w-4 h-4" />
                 </div>
                 <div>
@@ -1169,7 +1180,7 @@ export const StockScreen: React.FC = () => {
                     }
                   }
                 }}
-                className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               >
                 {products.map(p => (
                   <option key={p.id} value={p.id}>
@@ -1225,8 +1236,8 @@ export const StockScreen: React.FC = () => {
                       }}
                       className={`p-2 rounded-xl text-xs font-bold border transition-all text-left ${
                         receiveFactor === 1
-                          ? 'bg-orange-500 text-white border-orange-500'
-                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-orange-50/50'
+                          ? 'bg-emerald-500 text-white border-emerald-500'
+                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-emerald-50/50'
                       }`}
                     >
                       1 {selectedProd.base_unit} (Base)
@@ -1244,8 +1255,8 @@ export const StockScreen: React.FC = () => {
                           }}
                           className={`p-2 rounded-xl text-xs font-bold border transition-all text-left ${
                             receiveFactor === u.factor
-                              ? 'bg-orange-500 text-white border-orange-500'
-                              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-orange-50/50'
+                              ? 'bg-emerald-500 text-white border-emerald-500'
+                              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-emerald-50/50'
                           }`}
                         >
                           {u.label} ({u.factor} {selectedProd.base_unit})
@@ -1291,10 +1302,10 @@ export const StockScreen: React.FC = () => {
               const selectedProd = products.find(p => p.id === receiveProductId);
 
               return (
-                <div className="bg-[#fffbf7] border border-orange-100 p-3 rounded-2xl flex items-center justify-between text-xs">
+                <div className="bg-gray-50 border border-emerald-100 p-3 rounded-2xl flex items-center justify-between text-xs">
                   <div>
                     <span className="text-gray-500 block">Jumla ya Malipo ya Mzigo:</span>
-                    <span className="font-display font-bold text-orange-600 text-base">
+                    <span className="font-display font-bold text-emerald-600 text-base">
                       {formatTsh(tot)}
                     </span>
                   </div>
@@ -1319,7 +1330,7 @@ export const StockScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConfirmReceive}
-                className="flex-2 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Ingiza Mzigo Stoo
@@ -1337,9 +1348,9 @@ export const StockScreen: React.FC = () => {
         maxWidth="max-w-md"
       >
         <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+            <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
                 <div>
@@ -1360,7 +1371,7 @@ export const StockScreen: React.FC = () => {
               <select
                 value={drawingProductId}
                 onChange={e => setDrawingProductId(e.target.value)}
-                className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               >
                 {products.map(p => (
                   <option key={p.id} value={p.id}>
@@ -1404,7 +1415,7 @@ export const StockScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConfirmDrawing}
-                className="flex-2 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Rekodi Matumizi Binafsi
@@ -1422,9 +1433,9 @@ export const StockScreen: React.FC = () => {
         maxWidth="max-w-lg"
       >
         <div className="p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+            <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                   <Plus className="w-4 h-4" />
                 </div>
                 <div>
@@ -1515,15 +1526,47 @@ export const StockScreen: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Kiwango cha Kuagiza Upya:</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Kiwango cha Kuagiza Upya (Hiari):</label>
                 <input
                   type="number"
                   value={newReorderLevel}
                   onChange={e => setNewReorderLevel(e.target.value)}
-                  placeholder="10"
+                  placeholder="Auto (20% ya stoo)"
                   className="w-full h-10 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Picha ya Bidhaa (Hiari):</label>
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {newImage ? (
+                    <img src={newImage} alt="Picha ya bidhaa" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImagePlus className="w-6 h-6 text-emerald-400" />
+                  )}
+                </div>
+                <label className="cursor-pointer px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                  {imageBusy ? 'Inapakia…' : newImage ? 'Badilisha Picha' : 'Chagua Picha'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProductPhoto}
+                  />
+                </label>
+                {newImage && (
+                  <button
+                    type="button"
+                    onClick={() => setNewImage(null)}
+                    className="text-xs font-semibold text-red-600 hover:underline"
+                  >
+                    Ondoa
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">Picha inapunguzwa kiotomatiki kabla ya kuhifadhiwa.</p>
             </div>
 
             <div>
@@ -1548,7 +1591,7 @@ export const StockScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConfirmAddProduct}
-                className="flex-2 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Hifadhi Bidhaa Mpya
@@ -1556,6 +1599,16 @@ export const StockScreen: React.FC = () => {
             </div>
           </div>
         </Modal>
+
+        <CatalogPickerModal
+          isOpen={showCatalogModal}
+          onClose={() => setShowCatalogModal(false)}
+          products={products}
+          onCommit={items => {
+            const added = addProducts(items);
+            showToast(`Bidhaa ${added} zimeongezwa kwenye stoo`, 'success');
+          }}
+        />
     </div>
   );
 };

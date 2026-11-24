@@ -154,10 +154,10 @@ export const AnalyticsScreen: React.FC = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-6">
       
       {/* Top Banner with Export Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div>
           <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-orange-600" />
+            <BarChart3 className="w-5 h-5 text-emerald-600" />
             <span>Takwimu & Uchambuzi wa Faida (Analytics)</span>
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -179,7 +179,7 @@ export const AnalyticsScreen: React.FC = () => {
             className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4 text-gray-600" />
-            <span>Backup Data (JSON)</span>
+            <span>Download data backup</span>
           </button>
         </div>
       </div>
@@ -187,7 +187,7 @@ export const AnalyticsScreen: React.FC = () => {
       {/* Financial Statement Breakdown Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Gross Revenue */}
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Jumla ya Mapato (Revenue)
           </span>
@@ -200,7 +200,7 @@ export const AnalyticsScreen: React.FC = () => {
         </div>
 
         {/* Cost of Goods Sold */}
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Gharama ya Bidhaa (COGS)
           </span>
@@ -213,7 +213,7 @@ export const AnalyticsScreen: React.FC = () => {
         </div>
 
         {/* Operating Expenses */}
-        <div className="bg-white p-4 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-4 rounded-3xl border border-emerald-100 shadow-xs">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
             Matumizi ya Duka (Expenses)
           </span>
@@ -226,27 +226,27 @@ export const AnalyticsScreen: React.FC = () => {
         </div>
 
         {/* Net Operating Profit */}
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-3xl shadow-sm">
-          <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider block">
+        <div className={`bg-gradient-to-br text-white p-4 rounded-3xl shadow-sm ${financialSummary.netOperatingProfit >= 0 ? 'from-emerald-600 to-emerald-700' : 'from-red-600 to-red-700'}`}>
+          <span className="text-xs font-semibold text-white/75 uppercase tracking-wider block">
             Faida Halisi ya Duka (Net Profit)
           </span>
           <div className="text-2xl font-black mt-1 font-mono">
             {formatTsh(financialSummary.netOperatingProfit)}
           </div>
-          <span className="text-[11px] text-emerald-100 mt-0.5 block">
+          <span className="text-[11px] text-white/75 mt-0.5 block">
             Faida ghafi kutoa matumizi ya duka
           </span>
         </div>
       </div>
 
       {/* Prominent Profit Equation Formula Banner */}
-      <div className="p-4 bg-orange-50/70 border border-orange-200 rounded-3xl text-xs space-y-2">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 font-bold text-orange-950">
+      <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-3xl text-xs space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 font-bold text-emerald-950">
           <span className="flex items-center gap-1.5">
             <span className="text-base">🧮</span>
             <span>Ufafanuzi wa Hesabu ya Faida:</span>
           </span>
-          <span className="font-mono text-emerald-700 bg-white px-2.5 py-1 rounded-xl border border-orange-200 shadow-2xs">
+          <span className="font-mono text-emerald-700 bg-white px-2.5 py-1 rounded-xl border border-emerald-200 shadow-2xs">
             Faida Halisi = Mauzo - Gharama za Kununua (COGS) - Matumizi
           </span>
         </div>
@@ -275,11 +275,11 @@ export const AnalyticsScreen: React.FC = () => {
       </div>
 
       {/* Chart 1: Daily Sales & Profit Trend (Line / Bar) */}
-      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs space-y-4">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-orange-600" />
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
               <span>Mwenendo wa Mauzo ya Kila Siku (Siku 14 Zilizopita)</span>
             </h3>
             <p className="text-xs text-gray-400">Mapato dhidi ya faida ya kila siku</p>
@@ -323,7 +323,7 @@ export const AnalyticsScreen: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* Top Products Bar Chart (7 cols) */}
-        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs space-y-3">
+        <div className="lg:col-span-7 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-3">
           <h3 className="font-extrabold text-sm text-gray-900">
             Bidhaa Zinazoongoza kwa Mauzo (Top Sellers)
           </h3>
@@ -346,7 +346,7 @@ export const AnalyticsScreen: React.FC = () => {
         </div>
 
         {/* Category Share Pie Chart (5 cols) */}
-        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs space-y-3">
+        <div className="lg:col-span-5 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-3">
           <h3 className="font-extrabold text-sm text-gray-900">
             Mgawanyo wa Mauzo kwa Makundi (Categories)
           </h3>

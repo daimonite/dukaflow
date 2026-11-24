@@ -44,7 +44,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-x-hidden overflow-y-auto"
       onClick={e => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -52,7 +52,8 @@ export const Modal: React.FC<ModalProps> = ({
       role="dialog"
     >
       <div
-        className={`bg-white rounded-3xl w-full ${maxWidth} max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto ${className}`}
+        className={`bg-white rounded-3xl !w-[calc(100vw-1.5rem)] !max-w-[calc(100vw-1.5rem)] min-w-0 [&_*]:min-w-0 [&_*]:max-w-full [&_.grid]:grid-cols-1 sm:[&_.grid]:grid-cols-2 max-h-[90vh] overflow-x-hidden overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-auto ${className}`}
+        style={{ width: 'min(32rem, calc(100vw - 1.5rem))', maxWidth: 'min(32rem, calc(100vw - 1.5rem))' }}
         onClick={e => e.stopPropagation()}
       >
         {title && (

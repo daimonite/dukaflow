@@ -1,27 +1,14 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
-import { useSync } from '../context/SyncContext';
-import { RoleSwitchModal } from './RoleSwitchModal';
 import {
-  Store,
-  Shield,
-  UserCheck,
-  Zap,
   Globe,
   Bell,
-  Lock,
-  ChevronDown,
   AlertTriangle,
-  RotateCcw,
-  Cloud,
-  RefreshCw,
-  Database,
-  Wifi,
-  WifiOff,
   Menu,
+  LogOut,
 } from 'lucide-react';
-import { formatTsh } from '../utils/translations';
-import { shopDateKey } from '../utils/shopTime';
+import { useAuth } from '../context/AuthContext';
+import { BrandLogo } from './BrandLogo';
 
 const SCREEN_LABELS: Record<string, { sw: string; en: string; emoji: string }> = {
   pos:       { sw: 'Mauzo ya Haraka',      en: 'Quick POS Sale',         emoji: '🛒' },
@@ -35,191 +22,93 @@ const SCREEN_LABELS: Record<string, { sw: string; en: string; emoji: string }> =
   admin:     { sw: 'Ukaguzi & Usimamizi',   en: 'Audit Log & Admin',      emoji: '🔐' },
 };
 
+const CLOUD_DOT: Record<string, { className: string; title: string }> = {
+  saving:  { className: 'bg-amber-400', title: 'Inahifadhi kwenye wingu…' },
+  saved:   { className: 'bg-emerald-500', title: 'Imehifadhiwa' },
+  offline: { className: 'bg-amber-400', title: 'Imehifadhiwa kwenye kifaa' },
+  error:   { className: 'bg-red-500', title: 'Haikuweza kuhifadhi' },
+  idle:    { className: 'bg-white/40', title: '' },
+};
+
 export const Header: React.FC<{
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onMenuClick: () => void;
-  onRoleClick?: () => void;
-}> = ({ activeTab, setActiveTab, onMenuClick, onRoleClick }) => {
-  const {
-    language,
-    setLanguage,
-    t,
-    currentRole,
-    currentUser,
-    settings,
-    sales,
-    auditLogs,
-    cashRegister,
-    customers,
-    suppliers,
-    products
-  } = useShop();
-
-  const { isOnline, isSyncing, pendingCount, openOutbox, isSimulatedOffline } = useSync();
-
-  const [showRoleModal, setShowRoleModal] = useState(false);
+}> = ({ activeTab, setActiveTab, onMenuClick }) => {
+  const { language, setLanguage, t, auditLogs, products } = useShop();
+  const { cloudStatus, signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const currentScreen = SCREEN_LABELS[activeTab] || SCREEN_LABELS.pos;
-
-  // Compute today's metrics
-  const todayStr = shopDateKey();
-  const todaySalesList = sales.filter(s => !s.voided_at && shopDateKey(s.sold_at) === todayStr);
-  const todayRevenue = todaySalesList.reduce((sum, s) => sum + s.total, 0);
-  const todayProfit = todaySalesList.reduce((sum, s) => sum + s.items.reduce((acc, i) => acc + i.line_profit, 0), 0);
-
-  // Debt totals
-  const totalCustomerDebt = customers.reduce((sum, c) => sum + Math.max(0, c.current_balance), 0);
-  const totalSupplierDebt = suppliers.reduce((sum, s) => sum + Math.max(0, s.current_balance), 0);
   const lowStockCount = products.filter(p => p.stock_qty <= p.reorder_level).length;
-
-  // Unread or high severity alerts
   const alertLogs = auditLogs.filter(l => l.severity === 'alert').slice(0, 5);
+  const cloudDot = CLOUD_DOT[cloudStatus] || CLOUD_DOT.idle;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-orange-100 shadow-xs">
-      {/* Top Banner with branding and quick stats */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5">
-        <div className="flex items-center justify-between gap-3">
-          
-          {/* Hamburger + Brand Logo & Name */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            {/* Hamburger menu button (opens sidebar) */}
+    <header className="sticky top-0 z-40 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-900 border-b border-emerald-950/60 shadow-lg shadow-emerald-950/20">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2">
+        <div className="flex items-center justify-between gap-2">
+
+          {/* Menu + brand + current screen */}
+          <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onMenuClick}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 transition-all btn-press shadow-2xs font-bold text-xs cursor-pointer"
+              className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all btn-press"
               aria-label="Open navigation menu"
               title="Fungua Menyu ya Pembeni (Sidebar Navigation)"
             >
-              <Menu className="w-4 h-4 text-orange-600" />
-              <span className="font-extrabold text-[11px] uppercase tracking-wider hidden sm:inline text-orange-900">Menyu</span>
+              <Menu className="w-4 h-4 text-emerald-300" />
             </button>
-            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-orange-500 to-orange-700 text-white flex items-center justify-center shadow-xs flex-shrink-0" aria-hidden="true"><Store className="w-4.5 h-4.5" /></div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="font-display font-extrabold text-base sm:text-xl tracking-tight text-gray-900 truncate">
-                  Duka<span className="text-orange-600">Smart</span>
-                </span>
-                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">
-                  {settings.storeName.split(' ')[0] || 'Duka'}
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Mtandaoni
-                </span>
+            <BrandLogo className="w-9 h-9 flex-shrink-0 rounded-lg ring-1 ring-white/20" />
+            <div className="min-w-0 leading-tight">
+              <div className="font-display font-extrabold text-base sm:text-xl tracking-tight text-white truncate">
+                Duka<span className="text-emerald-300">Smart</span>
               </div>
-              <p className="text-[11px] text-gray-500 truncate font-medium">
-                <span className="sm:hidden font-bold text-orange-700 mr-1">
-                  {currentScreen.emoji} {language === 'sw' ? currentScreen.sw : currentScreen.en} ·
-                </span>
-                <span className="hidden sm:inline">{settings.storeName} · {settings.storeLocation} · </span>
-                {t.appSubtitle}
-              </p>
-            </div>
-
-            {/* Current Active Screen Tag (Desktop) */}
-            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-orange-50/70 border border-orange-200/80 rounded-xl text-xs font-bold text-orange-950 ml-1">
-              <span>{currentScreen.emoji}</span>
-              <span className="truncate">{language === 'sw' ? currentScreen.sw : currentScreen.en}</span>
+              <div className="text-[11px] text-emerald-100/80 truncate max-w-[45vw] sm:max-w-xs font-medium">
+                <span className="mr-1">{currentScreen.emoji}</span>
+                {language === 'sw' ? currentScreen.sw : currentScreen.en}
+              </div>
             </div>
           </div>
 
-          {/* Quick Metrics Ticker (Hidden on very small screens, visible on tablet+) */}
-          <div className="hidden lg:flex items-center gap-4 text-xs">
-            <div className="bg-orange-50/80 border border-orange-100/80 px-3 py-1.5 rounded-xl">
-              <div className="text-gray-500 font-medium">{t.todaySales}</div>
-              <div className="text-orange-700 font-bold text-sm">{formatTsh(todayRevenue)}</div>
-            </div>
-
-            {currentRole === 'admin' && (
-              <div className="bg-emerald-50/80 border border-emerald-100/80 px-3 py-1.5 rounded-xl">
-                <div className="text-gray-500 font-medium">{t.todayProfit}</div>
-                <div className="text-emerald-700 font-bold text-sm">{formatTsh(todayProfit)}</div>
-              </div>
-            )}
-
-            <div className="bg-amber-50/80 border border-amber-100/80 px-3 py-1.5 rounded-xl">
-              <div className="text-gray-500 font-medium">{t.debtOwedToUs}</div>
-              <div className="text-amber-800 font-bold text-sm">{formatTsh(totalCustomerDebt)}</div>
-            </div>
-
-            {lowStockCount > 0 && (
-              <button
-                onClick={() => setActiveTab('stock')}
-                className="flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1.5 rounded-xl hover:bg-red-100 transition-colors"
-              >
-                <AlertTriangle className="w-3.5 h-3.5 animate-pulse text-red-500" />
-                <span className="font-bold">{lowStockCount} {t.lowStockNotice}</span>
-              </button>
-            )}
-          </div>
-
-          {/* Action buttons: Role, Language, Notifications, Sync/Outbox */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            
-            {/* Sync & Outbox Status Indicator */}
+          {/* Low-stock alert (tablet and up) */}
+          {lowStockCount > 0 && (
             <button
-              onClick={openOutbox}
-              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer ${
-                !isOnline
-                  ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100 shadow-2xs'
-                  : isSyncing
-                  ? 'bg-blue-50 border-blue-300 text-blue-900 shadow-2xs'
-                  : pendingCount > 0
-                  ? 'bg-orange-50 border-orange-300 text-orange-900 hover:bg-orange-100 shadow-2xs'
-                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
-              }`}
-              title="Hali ya Mtandao & Sanduku la Miamala (Dexie Outbox)"
+              onClick={() => setActiveTab('stock')}
+              className="hidden lg:flex items-center gap-1.5 flex-shrink-0 bg-emerald-500/20 text-emerald-100 border border-emerald-400/40 px-2.5 py-1.5 rounded-xl hover:bg-emerald-500/30 transition-colors text-xs"
             >
-              {!isOnline ? (
-                <>
-                  <WifiOff className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="hidden sm:inline">Offline</span>
-                  {pendingCount > 0 && (
-                    <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-extrabold animate-pulse">
-                      {pendingCount}
-                    </span>
-                  )}
-                </>
-              ) : isSyncing ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" />
-                  <span className="hidden sm:inline text-blue-800">Inapakia...</span>
-                </>
-              ) : pendingCount > 0 ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
-                  <Database className="w-3.5 h-3.5 text-orange-600" />
-                  <span className="hidden sm:inline">Outbox</span>
-                  <span className="bg-orange-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-extrabold">
-                    {pendingCount}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="hidden sm:inline">Mtandaoni</span>
-                </>
-              )}
+              <AlertTriangle className="w-3.5 h-3.5 animate-pulse text-emerald-300" />
+              <span className="font-bold">{lowStockCount} {t.lowStockNotice}</span>
             </button>
+          )}
+
+          {/* Cloud status (dot only — details show on hover) */}
+          {cloudDot.title && (
+            <span
+              aria-live="polite"
+              title={cloudDot.title}
+              className={`hidden sm:block w-2 h-2 rounded-full flex-shrink-0 animate-pulse ${cloudDot.className}`}
+            />
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
 
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'sw' ? 'en' : 'sw')}
-              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-gray-200 hover:bg-orange-50 hover:text-orange-600 transition-colors text-gray-700"
+              className="flex items-center gap-1 text-xs font-semibold px-2 h-10 rounded-xl border border-white/20 bg-white/5 hover:bg-white/15 hover:text-white transition-colors text-white/90"
               title="Badili Lugha / Switch Language"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span className="uppercase hidden sm:inline">{language}</span>
+              <span className="uppercase">{language}</span>
             </button>
 
             {/* Audit Notifications Bell */}
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 border border-gray-200 transition-colors"
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl text-white/85 hover:bg-white/15 hover:text-white border border-white/15 transition-colors"
                 title="Arifa za Mabadiliko / Audit Alerts"
               >
                 <Bell className="w-4 h-4" />
@@ -230,9 +119,8 @@ export const Header: React.FC<{
                 )}
               </button>
 
-              {/* Notification dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-1.5rem))] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
+                <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-auto mt-0 sm:mt-2 w-[calc(100vw-1.5rem)] sm:w-80 bg-white rounded-2xl shadow-xl border border-gray-100 p-3 z-50">
                   <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                     <span className="font-bold text-xs text-gray-800">Arifa Muhimu za Mfumo (Audit)</span>
                     <button
@@ -240,7 +128,7 @@ export const Header: React.FC<{
                         setShowNotifications(false);
                         setActiveTab('admin');
                       }}
-                      className="text-[11px] text-orange-600 hover:underline font-semibold"
+                      className="text-[11px] text-emerald-600 hover:underline font-semibold"
                     >
                       Tazama Zote
                     </button>
@@ -250,8 +138,8 @@ export const Header: React.FC<{
                       <p className="text-xs text-gray-400 py-3 text-center">Hakuna arifa za dharura kwa sasa.</p>
                     ) : (
                       alertLogs.map(log => (
-                        <div key={log.id} className="p-2 bg-orange-50/60 rounded-xl border border-orange-100 text-xs">
-                          <div className="flex items-center justify-between font-semibold text-orange-950">
+                        <div key={log.id} className="p-2 bg-emerald-50/60 rounded-xl border border-emerald-100 text-xs">
+                          <div className="flex items-center justify-between font-semibold text-emerald-950">
                             <span>{log.action}</span>
                             <span className="text-[10px] text-gray-500">{new Date(log.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
@@ -265,36 +153,17 @@ export const Header: React.FC<{
               )}
             </div>
 
-            {/* Role Switcher Pill */}
             <button
-              onClick={() => onRoleClick ? onRoleClick() : setShowRoleModal(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                currentRole === 'admin'
-                  ? 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
-                  : currentRole === 'manager'
-                  ? 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100'
-                  : 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100'
-              }`}
+              onClick={() => void signOut()}
+              className="flex items-center justify-center w-10 h-10 rounded-xl text-white/85 hover:bg-red-500/25 hover:text-white border border-white/15 transition-colors"
+              title="Sign out"
+              aria-label="Sign out"
             >
-              {currentRole === 'admin' ? (
-                <Shield className="w-3.5 h-3.5 text-purple-600" />
-              ) : currentRole === 'manager' ? (
-                <UserCheck className="w-3.5 h-3.5 text-orange-600" />
-              ) : (
-                <Zap className="w-3.5 h-3.5 text-blue-600" />
-              )}
-              <span className="capitalize hidden sm:inline">{currentRole === 'admin' ? 'Admin' : currentRole === 'manager' ? 'Meneja' : 'Umeme'}</span>
-              <ChevronDown className="w-3 h-3 text-gray-400" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
-
-      {/* Role Switch Modal */}
-      <RoleSwitchModal
-        isOpen={showRoleModal}
-        onClose={() => setShowRoleModal(false)}
-      />
     </header>
   );
 };

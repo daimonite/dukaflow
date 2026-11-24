@@ -137,10 +137,10 @@ export const PurchasesScreen: React.FC = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-5">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div>
           <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-orange-600" />
+            <FileText className="w-5 h-5 text-emerald-600" />
             <span>{t.purchases} (Kuweka Mzigo & Risiti za Ununuzi)</span>
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -157,7 +157,7 @@ export const PurchasesScreen: React.FC = () => {
             setSelectedSupplierId(suppliers[0]?.id || '');
             setShowAddModal(true);
           }}
-          className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold shadow-xs shadow-orange-500/20 flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs shadow-emerald-500/20 flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Rekodi Ununuzi Mpya</span>
@@ -165,7 +165,7 @@ export const PurchasesScreen: React.FC = () => {
       </div>
 
       {/* Purchases List */}
-      <div className="bg-white rounded-3xl border border-orange-100 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-3xl border border-emerald-100 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <span className="font-extrabold text-sm text-gray-800">Historia ya Risiti za Mizigo</span>
           <span className="text-xs text-gray-500">{purchases.length} Risiti</span>
@@ -173,7 +173,7 @@ export const PurchasesScreen: React.FC = () => {
 
         <div className="divide-y divide-gray-100">
           {purchases.map(pur => (
-            <div key={pur.id} className="p-4 hover:bg-orange-50/20 transition-colors">
+            <div key={pur.id} className="p-4 hover:bg-emerald-50/20 transition-colors">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 
                 {/* Left: Supplier & Invoice */}
@@ -224,7 +224,7 @@ export const PurchasesScreen: React.FC = () => {
                   {pur.receipt_url && (
                     <button
                       onClick={() => setViewReceiptUrl(pur.receipt_url!)}
-                      className="p-1.5 border border-orange-200 rounded-xl hover:bg-orange-50 text-orange-600"
+                      className="p-1.5 border border-emerald-200 rounded-xl hover:bg-emerald-50 text-emerald-600"
                       title="Tazama Picha ya Risiti"
                     >
                       <ImageIcon className="w-5 h-5" />
@@ -263,7 +263,7 @@ export const PurchasesScreen: React.FC = () => {
               <select
                 value={selectedSupplierId}
                 onChange={e => setSelectedSupplierId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
               >
                 {suppliers.map(s => (
                   <option key={s.id} value={s.id}>{s.name} ({s.phone})</option>
@@ -278,7 +278,7 @@ export const PurchasesScreen: React.FC = () => {
                 value={invoiceNo}
                 onChange={e => setInvoiceNo(e.target.value)}
                 placeholder="Mf. INV-88219"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono focus:border-orange-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
           </div>
@@ -290,7 +290,7 @@ export const PurchasesScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={addPurchaseRow}
-                className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Ongeza Aina Nyingine</span>
@@ -303,7 +303,7 @@ export const PurchasesScreen: React.FC = () => {
                 const baseCost = row.factor > 0 ? row.unitCost / row.factor : row.unitCost;
 
                 return (
-                  <div key={idx} className="p-3 bg-orange-50/40 rounded-2xl border border-orange-100 space-y-2">
+                  <div key={idx} className="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100 space-y-2">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="sm:col-span-1">
                         <label className="text-[10px] font-bold text-gray-600 block">Bidhaa:</label>
@@ -372,7 +372,7 @@ export const PurchasesScreen: React.FC = () => {
                       </div>
 
                       <div className="flex items-center justify-between pt-3">
-                        <div className="text-[11px] font-semibold text-orange-900">
+                        <div className="text-[11px] font-semibold text-emerald-900">
                           Gharama: {formatTsh(baseCost)}/{currentProd?.base_unit}
                         </div>
                         {purchaseRows.length > 1 && (
@@ -396,7 +396,7 @@ export const PurchasesScreen: React.FC = () => {
           <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200/70 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-gray-700">Jumla Kuu ya Mzigo:</span>
-              <span className="text-base text-orange-600 font-mono font-black">{formatTsh(calculatedTotalCost)}</span>
+              <span className="text-base text-emerald-600 font-mono font-black">{formatTsh(calculatedTotalCost)}</span>
             </div>
 
             {/* Quick Tender Options */}
@@ -435,7 +435,7 @@ export const PurchasesScreen: React.FC = () => {
                   value={paidAmountInput}
                   onChange={e => setPaidAmountInput(e.target.value)}
                   placeholder={calculatedTotalCost.toString()}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-orange-500 focus:outline-hidden bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono font-bold focus:border-emerald-500 focus:outline-hidden bg-white"
                 />
               </div>
 
@@ -446,7 +446,7 @@ export const PurchasesScreen: React.FC = () => {
                   accept="image/*"
                   capture="environment"
                   onChange={handlePhotoUpload}
-                  className="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                  className="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                 />
                 {receiptImage && (
                   <span className="text-[10px] text-emerald-600 font-bold block mt-1">Picha imepakiwa kikamilifu</span>
@@ -478,7 +478,7 @@ export const PurchasesScreen: React.FC = () => {
               value={purchaseNote}
               onChange={e => setPurchaseNote(e.target.value)}
               placeholder="Mf. Baki 85,000 tutalipa Ijumaa baada ya mauzo"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
@@ -492,7 +492,7 @@ export const PurchasesScreen: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-xs"
+              className="px-5 py-2 text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-xs"
             >
               Hifadhi Mzigo
             </button>

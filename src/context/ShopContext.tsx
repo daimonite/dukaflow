@@ -35,9 +35,17 @@ import {
   initialAuditLogs,
   initialCashRegister
 } from '../data/seedData';
-import { Language, translations, formatTsh } from '../utils/translations';
-import { syncService } from '../services/syncService';
+import { Language, translations } from '../utils/translations';
 import { shopDateKey } from '../utils/shopTime';
+import { useAuth } from './AuthContext';
+import { useSync } from './SyncContext';
+import {
+  BusinessState,
+  CloudConflictError,
+  loadCloudBusinessState,
+  saveCloudBusinessState,
+} from '../services/cloudBusinessState';
+import { mergeBusinessState } from '../utils/mergeBusinessState';
 
 interface ShopContextType {
   // Localization & Role
@@ -87,7 +95,7 @@ interface ShopContextType {
   
   voidSale: (saleId: string, reason: string) => void;
   
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  addProducts: (products: Omit<Product, 'id'>[]) => number;
   updateProductPrice: (productId: string, newSellPrice: number, reason: string) => void;
   adjustStock: (productId: string, newQty: number, reason: string) => void;
   
@@ -122,6 +130,7 @@ interface ShopContextType {
   recordSupplierPayment: (supplierId: string, amount: number, paymentMethod: PaymentMethod, note?: string) => void;
   
   // Power Actions
+  startPowerPeriod: () => void;
   addPowerMember: (member: Omit<PowerMember, 'id'>) => void;
   recordPowerReading: (periodId: string, memberId: string, currentReading: number) => void;
   recordPowerPayment: (periodId: string, memberId: string, amount: number, paymentMethod: PowerPayment['payment_method'], reference?: string) => void;
@@ -145,16 +154,18 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 const STORAGE_KEY = 'dukeflow_app_state_v1';
 
 export const defaultSettings: ShopSettings = {
-  storeName: 'DukaSmart Super Duka',
-  storeLocation: 'Arusha, Tanzania',
-  storePhone: '+255 754 000 000',
-  adminName: 'Kelvin',
-  adminPin: '1234',
-  managerName: 'Baraka',
-  receiptFooter: 'Asante kwa kununua nasi! Karibu tena.'
+  storeName: 'My Business',
+  storeLocation: '',
+  storePhone: '',
+  adminName: 'Owner',
+  adminPin: '',
+  managerName: 'Manager',
+  receiptFooter: 'Thank you for your purchase.'
 };
 
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { session, setCloudStatus } = useAuth();
+  const { isOnline: networkAvailable } = useSync();
   const [language, setLanguage] = useState<Language>(() => {
     return (localStorage.getItem('dukeflow_lang') as Language) || 'sw';
   });
@@ -223,12 +234,35 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [powerPeriods, setPowerPeriods] = useState<PowerPeriod[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_power_periods`);
-    return saved ? JSON.parse(saved) : initialPowerPeriods;
+    if (!saved) return initialPowerPeriods;
+    return (JSON.parse(saved) as PowerPeriod[]).map(period =>
+      period.status === 'open' && period.rate_per_unit === 0
+        ? { ...period, rate_per_unit: 400.13 }
+        : period
+    );
   });
 
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_meter_readings`);
-    return saved ? JSON.parse(saved) : initialMeterReadings;
+    if (!saved) return initialMeterReadings;
+    const savedPeriods = JSON.parse(localStorage.getItem(`${STORAGE_KEY}_power_periods`) || '[]') as PowerPeriod[];
+    const defaultedPeriodIds = new Set(
+      savedPeriods.filter(period => period.status === 'open' && period.rate_per_unit === 0).map(period => period.id)
+    );
+    return (JSON.parse(saved) as MeterReading[]).map(reading => {
+      if (!defaultedPeriodIds.has(reading.period_id)) return reading;
+      const currentCharge = Math.round(reading.units_used * 400.13 * 100) / 100;
+      const totalDue = Math.round(currentCharge + reading.carried_forward_debt);
+      const closingBalance = totalDue - reading.paid_amount;
+      return {
+        ...reading,
+        rate_charged: 400.13,
+        current_charge: currentCharge,
+        total_due: totalDue,
+        closing_balance: closingBalance,
+        status: closingBalance <= 0 ? 'paid' : reading.paid_amount > 0 ? 'partial' : 'unpaid',
+      };
+    });
   });
 
   const [powerPayments, setPowerPayments] = useState<PowerPayment[]>(() => {
@@ -306,6 +340,94 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_cash_register`, JSON.stringify(cashRegister));
   }, [cashRegister]);
+
+  // Replace the in-memory collections with a merged snapshot after a conflict.
+  // Settings and the cash register are deliberately left alone: they are single
+  // objects where this device's values win.
+  const applyBusinessState = (state: BusinessState) => {
+    const apply = <T,>(value: unknown, setter: React.Dispatch<React.SetStateAction<T[]>>) => {
+      if (Array.isArray(value)) setter(value as T[]);
+    };
+    apply<Product>(state.products, setProducts);
+    apply<Customer>(state.customers, setCustomers);
+    apply<Supplier>(state.suppliers, setSuppliers);
+    apply<Sale>(state.sales, setSales);
+    apply<Purchase>(state.purchases, setPurchases);
+    apply<Expense>(state.expenses, setExpenses);
+    apply<OwnerDrawing>(state.owner_drawings, setOwnerDrawings);
+    apply<LedgerEntry>(state.ledger, setLedgerEntries);
+    apply<PowerMember>(state.power_members, setPowerMembers);
+    apply<PowerPeriod>(state.power_periods, setPowerPeriods);
+    apply<MeterReading>(state.meter_readings, setMeterReadings);
+    apply<PowerPayment>(state.power_payments, setPowerPayments);
+    apply<AuditLogEntry>(state.audit_logs, setAuditLogs);
+  };
+
+  // Keep the local cache as the offline source of truth and debounce a complete,
+  // authenticated cloud snapshot so every business record follows the same path.
+  useEffect(() => {
+    const userId = session?.user.id;
+    // AuthGate only mounts this provider once the account has a business (a
+    // loaded copy or a saved first-time setup), so the setup screen never
+    // creates a row.
+    if (!userId) return;
+    const { adminPin: _localOnlyPin, ...cloudSettings } = settings;
+    const snapshot: BusinessState = {
+      settings: cloudSettings,
+      products,
+      customers,
+      suppliers,
+      sales,
+      purchases,
+      expenses,
+      owner_drawings: ownerDrawings,
+      ledger: ledgerEntries,
+      power_members: powerMembers,
+      power_periods: powerPeriods,
+      meter_readings: meterReadings,
+      power_payments: powerPayments,
+      audit_logs: auditLogs,
+      cash_register: cashRegister,
+    };
+
+    localStorage.setItem('dukeflow_cloud_dirty', 'true');
+    if (!networkAvailable) {
+      setCloudStatus('offline');
+      return;
+    }
+
+    setCloudStatus('saving');
+    const timer = window.setTimeout(() => {
+      const persist = async () => {
+        try {
+          await saveCloudBusinessState(userId, snapshot);
+          return;
+        } catch (error) {
+          if (!(error instanceof CloudConflictError)) throw error;
+        }
+
+        // Another phone saved this business first. Keep everything it recorded,
+        // merge it with what this device has, then retry once against the
+        // revision we just read.
+        const remote = await loadCloudBusinessState(userId);
+        if (!remote) throw new CloudConflictError();
+        const merged = mergeBusinessState(snapshot, remote.state);
+        applyBusinessState(merged);
+        await saveCloudBusinessState(userId, merged);
+      };
+
+      persist()
+        .then(() => {
+          localStorage.removeItem('dukeflow_cloud_dirty');
+          setCloudStatus('saved');
+        })
+        .catch(err => {
+          console.error('Cloud save failed; local changes are preserved:', err);
+          setCloudStatus('error');
+        });
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [session?.user.id, settings, products, customers, suppliers, sales, purchases, expenses, ownerDrawings, ledgerEntries, powerMembers, powerPeriods, meterReadings, powerPayments, auditLogs, cashRegister, networkAvailable, setCloudStatus]);
 
   const currentUser = {
     name: currentRole === 'admin'
@@ -441,15 +563,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setSales(prev => [newSale, ...prev]);
 
-    // Queue in Dexie Outbox for Supabase upload
-    syncService.queueTransaction({
-      type: 'sale',
-      title: `Mauzo: ${newSale.receipt_no} (${newSale.customer_name})`,
-      amount: newSale.total,
-      target_table: 'sales',
-      payload: newSale
-    }).catch(console.error);
-
     return newSale;
   };
 
@@ -535,21 +648,30 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 3. Products: Add & Price Update
-  const addProduct: ShopContextType['addProduct'] = (productData) => {
-    const newProd: Product = {
-      ...productData,
-      id: `prod-${Date.now()}`,
-    };
-    setProducts(prev => [newProd, ...prev]);
+  // One entry point for new products: the single form sends one item, the
+  // catalogue picker sends the whole selection. One state update, one audit row.
+  const addProducts: ShopContextType['addProducts'] = (items) => {
+    if (items.length === 0) return 0;
+    const stamp = Date.now();
+    const created: Product[] = items.map((data, index) => ({
+      ...data,
+      id: `prod-${stamp}-${index}`,
+    }));
+    setProducts(prev => [...created, ...prev]);
 
     addAuditEntry({
       table_name: 'products',
-      record_id: newProd.id,
+      record_id: created[0].id,
       action: 'PRICE_CHANGE',
-      new_value: { name: newProd.name, sell_price: newProd.sell_price, avg_cost: newProd.avg_cost },
-      reason: 'Bidhaa mpya imeongezwa dukani',
+      new_value: {
+        added: created.map(p => ({ name: p.name, sell_price: p.sell_price, stock_qty: p.stock_qty })),
+      },
+      reason: created.length === 1
+        ? 'Bidhaa mpya imeongezwa dukani'
+        : `Bidhaa ${created.length} zimeongezwa kwa orodha ya aina ya biashara`,
       severity: 'digest',
     });
+    return created.length;
   };
 
   const updateProductPrice: ShopContextType['updateProductPrice'] = (productId, newSellPrice, reason) => {
@@ -572,21 +694,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       severity: 'alert',
     });
 
-    // Queue in Dexie Outbox for Supabase
-    syncService.queueTransaction({
-      type: 'price_update',
-      title: `Bei ya ${prod.name}: TSh ${newSellPrice}`,
-      amount: newSellPrice,
-      target_table: 'products',
-      payload: {
-        product_id: productId,
-        product_name: prod.name,
-        old_price: oldPrice,
-        new_price: newSellPrice,
-        reason: reason || 'Marekebisho ya bei ya kuuza',
-        updated_at: new Date().toISOString()
-      }
-    }).catch(console.error);
   };
 
   // 4. Adjust Stock / Stocktake Shrinkage
@@ -611,21 +718,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       severity: diff < 0 ? 'alert' : 'digest',
     });
 
-    // Queue in Dexie Outbox for Supabase
-    syncService.queueTransaction({
-      type: 'stock_adjustment',
-      title: `Hesabu ya Stoo: ${prod.name} (${newQty} ${prod.base_unit})`,
-      target_table: 'inventory_movements',
-      payload: {
-        product_id: productId,
-        product_name: prod.name,
-        old_qty: oldQty,
-        new_qty: newQty,
-        diff,
-        reason: reason || 'Marekebisho ya stoo',
-        adjusted_at: new Date().toISOString()
-      }
-    }).catch(console.error);
   };
 
   // 5. Purchases with Weighted-Average Cost Update
@@ -741,14 +833,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       severity: 'digest',
     });
 
-    // Queue in Dexie Outbox for Supabase
-    syncService.queueTransaction({
-      type: 'purchase',
-      title: `Ununuzi: ${newPurchase.invoice_no} (${supplierName})`,
-      amount: newPurchase.total,
-      target_table: 'purchases',
-      payload: newPurchase
-    }).catch(console.error);
   };
 
   // 6. Operating Expenses
@@ -780,14 +864,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       severity: 'digest',
     });
 
-    // Queue in Dexie Outbox for Supabase
-    syncService.queueTransaction({
-      type: 'expense',
-      title: `Matumizi: ${spentOn}`,
-      amount: amount,
-      target_table: 'expenses',
-      payload: newExpense
-    }).catch(console.error);
   };
 
   // 7. Owner Drawings / Personal Use (Valued at Cost - doesn't distort operating profit)
@@ -843,14 +919,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setOwnerDrawings(prev => [newDrawing, ...prev]);
 
-    // Queue in Dexie Outbox for Supabase
-    syncService.queueTransaction({
-      type: 'owner_drawing',
-      title: `Matumizi Binafsi: ${note || prodName}`,
-      amount: costValue,
-      target_table: 'owner_drawings',
-      payload: newDrawing
-    }).catch(console.error);
   };
 
   // 8. Customers & Debtors
@@ -1057,15 +1125,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setPowerPayments(prev => [newPayment, ...prev]);
 
-    // Queue in Dexie Outbox for Supabase
-    syncService.queueTransaction({
-      type: 'power_payment',
-      title: `Malipo ya Umeme: ${memberName} (${formatTsh(amount)})`,
-      amount,
-      target_table: 'power_payments',
-      payload: newPayment
-    }).catch(console.error);
-
     setMeterReadings(prev =>
       prev.map(reading => {
         if (reading.period_id === periodId && reading.member_id === memberId) {
@@ -1212,6 +1271,22 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     setMeterReadings(prev => [...prev, ...newReadings]);
+  };
+
+  const startPowerPeriod: ShopContextType['startPowerPeriod'] = () => {
+    if (powerPeriods.some(period => period.status === 'open')) return;
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (powerPeriods.some(period => period.month === month)) return;
+    const period: PowerPeriod = {
+      id: `period-${month}`,
+      month,
+      month_label: now.toLocaleString('sw-TZ', { month: 'long', year: 'numeric' }),
+      rate_per_unit: 400.13,
+      rate_mode: 'fixed',
+      status: 'open',
+    };
+    setPowerPeriods(previous => [period, ...previous]);
   };
 
   // 11. Register Actions
@@ -1435,7 +1510,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         cashRegister,
         createSale,
         voidSale,
-        addProduct,
+        addProducts,
         updateProductPrice,
         adjustStock,
         addPurchase,
@@ -1446,6 +1521,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addSupplier,
         recordSupplierPayment,
         addPowerMember,
+        startPowerPeriod,
         recordPowerReading,
         recordPowerPayment,
         updatePowerRate,

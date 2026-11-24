@@ -12,24 +12,20 @@ import {
   Zap,
   BarChart3,
   Shield,
-  Store,
   ChevronRight,
-  TrendingUp,
   AlertTriangle,
   Wifi,
   WifiOff,
-  Cloud,
-  UserCheck,
 } from 'lucide-react';
 import { formatTsh } from '../utils/translations';
 import { shopDateKey } from '../utils/shopTime';
+import { BrandLogo } from './BrandLogo';
 
 interface SidebarProps {
   isOpen: boolean;
   activeTab: string;
   onClose: () => void;
   onNavigate: (tab: string) => void;
-  onOpenRoleModal?: () => void;
 }
 
 interface NavGroup {
@@ -45,9 +41,9 @@ interface NavGroup {
   }[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, onNavigate, onOpenRoleModal }) => {
-  const { t, currentRole, currentUser, settings, products, customers, sales, auditLogs } = useShop();
-  const { isOnline, pendingCount } = useSync();
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, onNavigate }) => {
+  const { t, currentUser, settings, products, customers, sales, auditLogs } = useShop();
+  const { isOnline } = useSync();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = React.useState(false);
@@ -117,14 +113,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, on
       label: 'Umeme & Usimamizi',
       items: [
         { id: 'power', label: 'Bili ya Umeme (LUKU)', icon: Zap, description: 'Sub-Meter Power Billing' },
-        { id: 'admin', label: 'Ukaguzi & Usimamizi',  icon: Shield, badge: alertCount, badgeColor: 'bg-purple-600', description: 'Audit Log & Roles' },
+        { id: 'admin', label: 'Ukaguzi & Usimamizi',  icon: Shield, badge: alertCount, badgeColor: 'bg-emerald-600', description: 'Audit Log & Roles' },
       ],
     },
   ];
 
-  const roleColor = currentRole === 'admin' ? 'from-purple-600 to-purple-800' :
-                    currentRole === 'manager' ? 'from-orange-500 to-amber-600' :
-                    'from-blue-500 to-blue-700';
+  const roleColor = 'from-emerald-950 to-emerald-900';
 
   return (
     <>
@@ -148,9 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, on
         <div className={`bg-gradient-to-br ${roleColor} p-4 pt-10 pb-5 flex-shrink-0`}>
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Store className="w-5 h-5 text-white" />
-              </div>
+              <BrandLogo className="w-10 h-10 flex-shrink-0 rounded-xl ring-1 ring-white/25" />
               <div>
                 <div className="font-display font-extrabold text-white text-lg leading-tight">
                   Duka<span className="text-white/80">Smart</span>
@@ -169,41 +161,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, on
             </button>
           </div>
 
-          {/* User Role Card - Clickable to switch role */}
-          <button
-            type="button"
-            onClick={() => {
-              handleClose();
-              onOpenRoleModal?.();
-            }}
-            className="w-full text-left bg-white/15 hover:bg-white/25 rounded-2xl p-3 backdrop-blur-sm transition-all border border-white/10 btn-press group cursor-pointer"
-            title="Bofya kubadili nafasi (Admin / Meneja / Umeme)"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-white/80" />
-                <span className="text-white/80 text-[10px] font-semibold uppercase tracking-wider">Mtumiaji & Nafasi</span>
-              </div>
-              <span className="text-[10px] bg-white/20 text-white font-bold px-2 py-0.5 rounded-full group-hover:bg-white/30 transition-colors">
-                Badili
-              </span>
-            </div>
+          <div className="w-full text-left bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
+            <div className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mb-1">Akaunti ya biashara</div>
             <div className="text-white font-bold text-sm">{currentUser.name}</div>
-            <div className="text-white/90 text-xs mt-0.5 font-medium">
-              {currentRole === 'admin' ? '🔐 Admin — Mamlaka Kamili' :
-               currentRole === 'manager' ? '👤 Meneja — Uuzaji & Stoo' :
-               '⚡ Msimamizi wa Umeme'}
-            </div>
-          </button>
+            <div className="text-white/90 text-xs mt-0.5 font-medium">Mmiliki · ameingia</div>
+          </div>
         </div>
 
         {/* ── Quick Stats Strip ── */}
         <div className="flex items-stretch bg-gray-50 border-b border-gray-100 flex-shrink-0">
           <div className="flex-1 p-2.5 text-center border-r border-gray-100">
             <div className="text-[10px] text-gray-500 font-medium">Leo</div>
-            <div className="text-orange-700 font-bold text-sm font-mono">{formatTsh(todayRevenue)}</div>
+            <div className="text-gray-900 font-bold text-sm font-mono">{formatTsh(todayRevenue)}</div>
           </div>
-          {currentRole === 'admin' && (
+          {(
             <div className="flex-1 p-2.5 text-center border-r border-gray-100">
               <div className="text-[10px] text-gray-500 font-medium">Faida</div>
               <div className="text-emerald-700 font-bold text-sm font-mono">{formatTsh(todayProfit)}</div>
@@ -214,9 +185,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, on
             <div className={`font-bold text-xs flex items-center justify-center gap-1 mt-0.5 ${isOnline ? 'text-emerald-600' : 'text-amber-600'}`}>
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
               {isOnline ? 'Online' : 'Offline'}
-              {pendingCount > 0 && (
-                <span className="bg-orange-500 text-white text-[9px] px-1 rounded-full font-mono">{pendingCount}</span>
-              )}
             </div>
           </div>
         </div>
@@ -237,21 +205,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, on
                     onClick={() => handleNavigate(item.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 relative group btn-press ${
                       isActive
-                        ? 'bg-orange-50 text-orange-700'
+                        ? 'bg-emerald-50 text-emerald-700'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
                     {/* Active left border */}
                     {isActive && (
-                      <span className="absolute left-0 top-1 bottom-1 w-0.5 bg-orange-500 rounded-r-full" />
+                      <span className="absolute left-0 top-1 bottom-1 w-0.5 bg-emerald-600 rounded-r-full" />
                     )}
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      isActive ? 'bg-orange-500 shadow-md shadow-orange-500/30' : 'bg-gray-100 group-hover:bg-gray-200'
+                      isActive ? 'bg-emerald-600 shadow-md shadow-emerald-600/20' : 'bg-gray-100 group-hover:bg-gray-200'
                     }`}>
                       <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className={`text-sm font-semibold leading-tight ${isActive ? 'text-orange-700' : ''}`}>
+                      <div className={`text-sm font-semibold leading-tight ${isActive ? 'text-emerald-700' : ''}`}>
                         {item.label}
                       </div>
                       {item.description && (
@@ -264,7 +232,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onClose, on
                       </span>
                     )}
                     {isActive && (
-                      <ChevronRight className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                      <ChevronRight className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                     )}
                   </button>
                 );

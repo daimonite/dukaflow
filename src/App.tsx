@@ -13,8 +13,8 @@ import { PurchasesScreen } from './components/PurchasesScreen';
 import { PowerBillingScreen } from './components/PowerBillingScreen';
 import { AnalyticsScreen } from './components/AnalyticsScreen';
 import { AdminAuditScreen } from './components/AdminAuditScreen';
-import { OutboxModal } from './components/OutboxModal';
-import { RoleSwitchModal } from './components/RoleSwitchModal';
+import { AuthProvider } from './context/AuthContext';
+import { AuthGate } from './components/AuthGate';
 
 // Tab order defines slide direction
 const TAB_ORDER = ['pos', 'calendar', 'stock', 'debtors', 'expenses', 'purchases', 'power', 'analytics', 'admin'];
@@ -31,7 +31,6 @@ function AppContent() {
   const [prevTab, setPrevTab] = useState<string>('pos');
   const [slideDir, setSlideDir] = useState<'left' | 'right' | 'none'>('none');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   const switchTab = useCallback((id: string) => {
     if (id === activeTab) {
@@ -45,13 +44,12 @@ function AppContent() {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-gray-900 flex flex-col font-sans selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[#f6f8f5] text-gray-900 flex flex-col font-sans selection:bg-emerald-700 selection:text-white">
       {/* ── Top App Header ── */}
       <Header
         activeTab={activeTab}
         setActiveTab={switchTab}
         onMenuClick={() => setSidebarOpen(true)}
-        onRoleClick={() => setRoleModalOpen(true)}
       />
 
       {/* ── Slide-Out Sidebar (Single Navigation Truth) ── */}
@@ -60,7 +58,6 @@ function AppContent() {
         activeTab={activeTab}
         onClose={() => setSidebarOpen(false)}
         onNavigate={switchTab}
-        onOpenRoleModal={() => setRoleModalOpen(true)}
       />
 
       {/* ── Main Content Router ── */}
@@ -88,14 +85,6 @@ function AppContent() {
         </div>
       </main>
 
-      {/* ── Dexie Outbox Sync Drawer ── */}
-      <OutboxModal />
-
-      {/* ── Role Switch Confirmation Modal ── */}
-      <RoleSwitchModal
-        isOpen={roleModalOpen}
-        onClose={() => setRoleModalOpen(false)}
-      />
     </div>
   );
 }
@@ -103,11 +92,15 @@ function AppContent() {
 export default function App() {
   return (
     <SyncProvider>
-      <ShopProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
-      </ShopProvider>
+      <AuthProvider>
+        <AuthGate>
+          <ShopProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </ShopProvider>
+        </AuthGate>
+      </AuthProvider>
     </SyncProvider>
   );
 }

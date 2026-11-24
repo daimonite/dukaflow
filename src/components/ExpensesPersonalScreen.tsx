@@ -118,10 +118,10 @@ export const ExpensesPersonalScreen: React.FC = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 space-y-5">
       
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-orange-100 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 shadow-xs">
         <div>
           <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-orange-600" />
+            <Wallet className="w-5 h-5 text-emerald-600" />
             <span>Matumizi ya Duka & Vitu vya Nyumbani</span>
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -130,13 +130,13 @@ export const ExpensesPersonalScreen: React.FC = () => {
         </div>
 
         {/* Tab switch pills */}
-        <div className="flex items-center gap-1.5 bg-orange-50 p-1 rounded-2xl border border-orange-100">
+        <div className="flex items-center gap-1.5 bg-emerald-50 p-1 rounded-2xl border border-emerald-100">
           <button
             onClick={() => setActiveTab('expenses')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeTab === 'expenses'
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'text-gray-600 hover:text-orange-700'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-gray-600 hover:text-emerald-700'
             }`}
           >
             <Wallet className="w-4 h-4" />
@@ -147,8 +147,8 @@ export const ExpensesPersonalScreen: React.FC = () => {
             onClick={() => setActiveTab('personal')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeTab === 'personal'
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'text-gray-600 hover:text-orange-700'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-gray-600 hover:text-emerald-700'
             }`}
           >
             <Home className="w-4 h-4" />
@@ -159,7 +159,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="bg-white p-5 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
               Jumla ya Matumizi ya Uendeshaji (Expenses)
@@ -168,7 +168,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
               Inapunguza Faida
             </span>
           </div>
-          <div className="text-3xl font-black text-gray-900 mt-2 font-mono">
+          <div className="text-3xl font-black text-red-600 mt-2 font-mono">
             {formatTsh(totalExpenses)}
           </div>
           <span className="text-[11px] text-gray-500 mt-1 block">
@@ -176,16 +176,16 @@ export const ExpensesPersonalScreen: React.FC = () => {
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-orange-100 shadow-xs">
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
               Vitu/Pesa Zilizochukuliwa Nyumbani (Owner Drawings)
             </span>
-            <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
               Thamani ya Cost
             </span>
           </div>
-          <div className="text-3xl font-black text-blue-900 mt-2 font-mono">
+          <div className="text-3xl font-black text-emerald-900 mt-2 font-mono">
             {formatTsh(totalOwnerDrawings)}
           </div>
           <span className="text-[11px] text-gray-500 mt-1 block">
@@ -195,8 +195,8 @@ export const ExpensesPersonalScreen: React.FC = () => {
       </div>
 
       {/* Explanatory banner */}
-      <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-start gap-2.5 text-xs text-blue-900">
-        <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+      <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900">
+        <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
         <div>
           <span className="font-bold">Kanuni ya Uhasibu wa Duka la Rejareja: </span>
           Ukichukua sukari au sabuni kwa matumizi ya nyumbani, isirekodiwe kama "Matumizi ya duka" kwa sababu itaonyesha duka lina hasara. Inarekodiwa kama <i>Owner Drawing</i> kwa bei halisi iliyonunuliwa (at cost).
@@ -205,12 +205,12 @@ export const ExpensesPersonalScreen: React.FC = () => {
 
       {/* EXPENSES TAB */}
       {activeTab === 'expenses' && (
-        <div className="bg-white rounded-3xl border border-orange-100 shadow-xs p-4 sm:p-5 space-y-4">
+        <div className="bg-white rounded-3xl border border-emerald-100 shadow-xs p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <span className="font-extrabold text-sm text-gray-800">Orodha ya Matumizi Yote</span>
             <button
               onClick={() => setShowExpenseModal(true)}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Rekodi Matumizi Mapya</span>
@@ -224,7 +224,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
               expenses.map(exp => (
                 <div
                   key={exp.id}
-                  className="p-3.5 bg-orange-50/30 rounded-2xl border border-orange-100 hover:border-orange-300 transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                  className="p-3.5 bg-emerald-50/30 rounded-2xl border border-emerald-100 hover:border-emerald-300 transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
                   <div>
                     <div className="flex items-center gap-2">
@@ -255,7 +255,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
 
       {/* PERSONAL USE TAB */}
       {activeTab === 'personal' && (
-        <div className="bg-white rounded-3xl border border-orange-100 shadow-xs p-4 sm:p-5 space-y-4">
+        <div className="bg-white rounded-3xl border border-emerald-100 shadow-xs p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <span className="font-extrabold text-sm text-gray-800">Orodha ya Vitu Vilivyochukuliwa Nyumbani</span>
             <button
@@ -263,7 +263,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
                 if (products.length > 0) setPersonalProductId(products[0].id);
                 setShowPersonalModal(true);
               }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Rekodi Vitu vya Nyumbani</span>
@@ -277,14 +277,14 @@ export const ExpensesPersonalScreen: React.FC = () => {
               ownerDrawings.map(draw => (
                 <div
                   key={draw.id}
-                  className="p-3.5 bg-blue-50/30 rounded-2xl border border-blue-100 hover:border-blue-300 transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                  className="p-3.5 bg-emerald-50/30 rounded-2xl border border-emerald-100 hover:border-emerald-300 transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-blue-950">
+                      <span className="font-bold text-xs text-emerald-950">
                         {draw.type === 'product' ? `${draw.product_name} (${draw.quantity} ${draw.base_unit})` : 'Pesa Taslimu ya Nyumbani'}
                       </span>
-                      <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
+                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
                         {draw.type === 'product' ? 'Bidhaa' : 'Cash'}
                       </span>
                     </div>
@@ -296,7 +296,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
 
                   <div className="text-right">
                     <span className="text-[10px] text-gray-400 block">Thamani ya Kununua:</span>
-                    <span className="font-mono font-extrabold text-sm text-blue-700">
+                    <span className="font-mono font-extrabold text-sm text-emerald-700">
                       {formatTsh(draw.cost_value)}
                     </span>
                   </div>
@@ -323,7 +323,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
               value={spentOn}
               onChange={e => setSpentOn(e.target.value)}
               placeholder="Mf. Mifuko ya nailoni, Nauli, Umeme"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
@@ -332,7 +332,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
             <select
               value={category}
               onChange={e => setCategory(e.target.value as ExpenseCategory)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
             >
               <option value="packaging">Mifuko / Vifungashio</option>
               <option value="transport">Nauli / Usafiri</option>
@@ -364,7 +364,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
               value={expenseNote}
               onChange={e => setExpenseNote(e.target.value)}
               placeholder="Mf. Bando 2 za mifuko Kariakoo"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-orange-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
@@ -378,7 +378,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow-xs"
+              className="px-4 py-2 text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-xs"
             >
               Hifadhi Matumizi
             </button>
@@ -405,7 +405,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
                 type="button"
                 onClick={() => setPersonalType('product')}
                 className={`py-1.5 rounded-xl text-xs font-bold border ${
-                  personalType === 'product' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  personalType === 'product' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-gray-50 border-gray-200 text-gray-700'
                 }`}
               >
                 Bidhaa Dukani
@@ -414,7 +414,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
                 type="button"
                 onClick={() => setPersonalType('cash')}
                 className={`py-1.5 rounded-xl text-xs font-bold border ${
-                  personalType === 'cash' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  personalType === 'cash' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-gray-50 border-gray-200 text-gray-700'
                 }`}
               >
                 Pesa Taslimu
@@ -429,7 +429,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
                 <select
                   value={personalProductId}
                   onChange={e => setPersonalProductId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-blue-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
                 >
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
@@ -447,7 +447,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
                   required
                   value={personalQty}
                   onChange={e => setPersonalQty(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-blue-200 text-xs font-mono font-bold focus:border-blue-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-xs font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
                 />
               </div>
             </>
@@ -460,7 +460,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
                 value={personalCashAmount}
                 onChange={e => setPersonalCashAmount(e.target.value)}
                 placeholder="20000"
-                className="w-full px-3 py-2 rounded-xl border border-blue-200 text-sm font-mono font-bold focus:border-blue-500 focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-sm font-mono font-bold focus:border-emerald-500 focus:outline-hidden"
               />
             </div>
           )}
@@ -472,7 +472,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
               value={personalNote}
               onChange={e => setPersonalNote(e.target.value)}
               placeholder="Mf. Sukari 2kg kwa ajili ya chai nyumbani"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-blue-500 focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-emerald-500 focus:outline-hidden"
             />
           </div>
 
@@ -486,7 +486,7 @@ export const ExpensesPersonalScreen: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs"
+              className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs"
             >
               Hifadhi
             </button>
